@@ -1,6 +1,9 @@
+#pragma once
 #include <limits>
 #include <string>
 #include <vector>
+
+using NodeID = int;
 
 enum class NodeType { primaryInput, primaryOutput, gate, flipFlopD, flipFlopQ };
 
@@ -11,19 +14,21 @@ struct TimingInfo {
 };
 
 struct Node {
-  int id;
+  NodeID id;
   std::string name;
   double cellDelay = 0.0;
 
   NodeType type = NodeType::gate;
   std::string cellType;
 
-  std::vector<int> fanin;
-  std::vector<int> fanout;
+  std::vector<NodeID> fanin;
+  std::vector<NodeID> fanout;
 
-  int criticalPredecessor = -1;
+  NodeID criticalPredecessor = -1;
 
   TimingInfo timing;
 
-  Node(int nodeID, const std::string &nodeName) : id(nodeID), name(nodeName) {}
+  Node(NodeID nodeID, const std::string &nodeName,
+       NodeType nodeType = NodeType::gate)
+      : id(nodeID), name(nodeName), type(nodeType) {}
 };
