@@ -1,4 +1,5 @@
 #include "STAEngine.hpp"
+#include "Node.hpp"
 #include <queue>
 #include <stdexcept>
 
@@ -41,4 +42,24 @@ std::vector<NodeID> STAEngine::topologicalSort() {
     throw std::runtime_error("Combinational loop detected");
   }
   return result;
+}
+
+void STAEngine::computeArrivalTimes() {
+  std::vector<NodeID> sortedNodes = topologicalSort();
+
+  for (NodeID currentNodeID : sortedNodes) {
+    Node &currentNode = graph.getNode(currentNodeID);
+
+    double maxArrival = 0.0;
+
+    for (NodeID predecessorNodeID : currentNode.fanin) {
+      const Node &predecessorNode = graph.getNode(predecessorNodeID);
+      if (predecessorNode.timing.arrival > maxArrival) {
+        maxArrival = predecessorNode.timing.arrival;
+        currentNode.criticalPredecessor = predecessorNodeID;
+      }
+    }
+
+    currentNode.timing.arrival = maxArrival + currentNode.cellDelay;
+  }
 }

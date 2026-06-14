@@ -11,4 +11,5 @@ public:
   explicit STAEngine(TimingGraph &g);
 
   std::vector<NodeID> topologicalSort();
+  void computeArrivalTimes();
 };
