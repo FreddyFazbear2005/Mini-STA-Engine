@@ -1,10 +1,20 @@
 #include "STAEngine.hpp"
-#include "Node.hpp"
 #include <algorithm>
+#include <iostream>
 #include <queue>
 #include <stdexcept>
 
 STAEngine::STAEngine(TimingGraph &g) : graph(g) {}
+
+void STAEngine::reset() {
+  for (NodeID i = 0; i < graph.size(); ++i) {
+    Node &node = graph.getNode(i);
+    node.timing.arrival = 0;
+    node.criticalPredecessor = -1;
+    node.timing.required = std::numeric_limits<double>::infinity();
+    node.timing.slack = 0;
+  }
+}
 
 std::vector<NodeID> STAEngine::topologicalSort() {
 
@@ -96,4 +106,47 @@ void STAEngine::computeSlack() {
     currentNode.timing.slack =
         currentNode.timing.required - currentNode.timing.arrival;
   }
+}
+
+void STAEngine::displayCriticalPath() {
+
+  if (graph.size() == 0) {
+    std::cout << "The graph is empty" << std::endl;
+    return;
+  }
+  NodeID worstEndNodeID = -1;
+  double worstSlack = std::numeric_limits<double>::infinity();
+
+  for (NodeID currentNodeID = 0; currentNodeID < graph.size();
+       currentNodeID++) {
+    const Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.timing.slack < worstSlack) {
+      worstSlack = currentNode.timing.slack;
+      worstEndNodeID = currentNodeID;
+    }
+  }
+
+  std::vector<NodeID> criticalPath;
+  std::cout << "The critical path has a slack of " << worstSlack << " ns\n"
+            << std::endl;
+  while (worstEndNodeID != -1) {
+    criticalPath.push_back(worstEndNodeID);
+    worstEndNodeID = graph.getNode(worstEndNodeID).criticalPredecessor;
+  }
+  std::reverse(criticalPath.begin(), criticalPath.end());
+  std::cout << "\n Critical Path:\n";
+  for (size_t i = 0; i < criticalPath.size(); ++i) {
+    std::cout << graph.getNode(criticalPath[i]).name;
+    if (i + 1 != criticalPath.size()) {
+      std::cout << " -> ";
+    }
+  }
+  std::cout << std::endl;
+}
+
+void STAEngine::run(double clockPeriod) {
+  reset();
+  computeArrivalTimes();
+  computeRequiredTimes(clockPeriod);
+  computeSlack();
 }

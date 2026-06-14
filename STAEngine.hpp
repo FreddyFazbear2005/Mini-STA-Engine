@@ -10,8 +10,11 @@ private:
 public:
   explicit STAEngine(TimingGraph &g);
 
+  void reset();
   std::vector<NodeID> topologicalSort();
   void computeArrivalTimes();
   void computeRequiredTimes(double clockPeriod);
   void computeSlack();
+  void displayCriticalPath();
+  void run(double clockPeriod);
 };
