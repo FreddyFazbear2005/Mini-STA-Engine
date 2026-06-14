@@ -1,5 +1,6 @@
 #include "STAEngine.hpp"
 #include "Node.hpp"
+#include <algorithm>
 #include <queue>
 #include <stdexcept>
 
@@ -61,5 +62,38 @@ void STAEngine::computeArrivalTimes() {
     }
 
     currentNode.timing.arrival = maxArrival + currentNode.cellDelay;
+  }
+}
+
+void STAEngine::computeRequiredTimes(double clockPeriod) {
+  std::vector<NodeID> sortedNodes = topologicalSort();
+
+  // At the end points the nodes will have a requirement of clockPeriod
+
+  for (NodeID currentNodeID : sortedNodes) {
+    Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.fanout.empty() == true) {
+      currentNode.timing.required = clockPeriod;
+    }
+  }
+
+  for (auto currentNodeIterator = sortedNodes.rbegin();
+       currentNodeIterator != sortedNodes.rend(); ++currentNodeIterator) {
+    Node &currentNode = graph.getNode(*currentNodeIterator);
+    for (NodeID successorNodeID : currentNode.fanout) {
+      const Node &successorNode = graph.getNode(successorNodeID);
+      currentNode.timing.required =
+          std::min(currentNode.timing.required,
+                   successorNode.timing.required - successorNode.cellDelay);
+    }
+  }
+}
+
+void STAEngine::computeSlack() {
+  for (NodeID currentNodeID = 0; currentNodeID < graph.size();
+       currentNodeID++) {
+    Node &currentNode = graph.getNode(currentNodeID);
+    currentNode.timing.slack =
+        currentNode.timing.required - currentNode.timing.arrival;
   }
 }

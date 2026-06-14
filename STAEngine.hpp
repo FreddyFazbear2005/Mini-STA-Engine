@@ -12,4 +12,6 @@ public:
 
   std::vector<NodeID> topologicalSort();
   void computeArrivalTimes();
+  void computeRequiredTimes(double clockPeriod);
+  void computeSlack();
 };
