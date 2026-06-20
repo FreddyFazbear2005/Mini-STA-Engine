@@ -12,10 +12,10 @@ void STAEngine::reset() {
   const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
   for (NodeID i = 0; i < numberOfNodes; ++i) {
     Node &node = graph.getNode(i);
-    node.timing.arrival = 0;
-    node.criticalPredecessor = -1;
-    node.timing.required = std::numeric_limits<double>::infinity();
-    node.timing.slack = 0;
+    node.timing.maxArrival = 0;
+    node.setupCriticalPredecessor = -1;
+    node.timing.maxRequired = std::numeric_limits<double>::infinity();
+    node.timing.setupSlack = 0;
   }
 }
 
@@ -68,9 +68,9 @@ void STAEngine::computeArrivalTimes() {
 
     for (NodeID predecessorNodeID : currentNode.fanin) {
       const Node &predecessorNode = graph.getNode(predecessorNodeID);
-      if (predecessorNode.timing.arrival >= maxArrival) {
-        maxArrival = predecessorNode.timing.arrival;
-        currentNode.criticalPredecessor = predecessorNodeID;
+      if (predecessorNode.timing.maxArrival >= maxArrival) {
+        maxArrival = predecessorNode.timing.maxArrival;
+        currentNode.setupCriticalPredecessor = predecessorNodeID;
       }
     }
 
@@ -79,9 +79,9 @@ void STAEngine::computeArrivalTimes() {
                                // must be constructed to reflect this Arrival is
                                // initialized to clock to Q delay and does not
                                // depend on predecessor nodes.
-      currentNode.timing.arrival = currentNode.clockToQ;
+      currentNode.timing.maxArrival = currentNode.clockToQ;
     } else {
-      currentNode.timing.arrival = maxArrival + currentNode.cellDelay;
+      currentNode.timing.maxArrival = maxArrival + currentNode.cellDelay;
     }
   }
 }
@@ -94,9 +94,9 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
   for (NodeID currentNodeID : sortedNodes) {
     Node &currentNode = graph.getNode(currentNodeID);
     if (currentNode.type == NodeType::primaryOutput) {
-      currentNode.timing.required = clockPeriod;
+      currentNode.timing.maxRequired = clockPeriod;
     } else if (currentNode.type == NodeType::flipFlopD) {
-      currentNode.timing.required = clockPeriod - currentNode.setupTime;
+      currentNode.timing.maxRequired = clockPeriod - currentNode.setupTime;
     }
   }
 
@@ -105,9 +105,9 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
     Node &currentNode = graph.getNode(*currentNodeIterator);
     for (NodeID successorNodeID : currentNode.fanout) {
       const Node &successorNode = graph.getNode(successorNodeID);
-      currentNode.timing.required =
-          std::min(currentNode.timing.required,
-                   successorNode.timing.required - successorNode.cellDelay);
+      currentNode.timing.maxRequired =
+          std::min(currentNode.timing.maxRequired,
+                   successorNode.timing.maxRequired - successorNode.cellDelay);
     }
   }
 }
@@ -117,8 +117,8 @@ void STAEngine::computeSlack() {
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     Node &currentNode = graph.getNode(currentNodeID);
-    currentNode.timing.slack =
-        currentNode.timing.required - currentNode.timing.arrival;
+    currentNode.timing.setupSlack =
+        currentNode.timing.maxRequired - currentNode.timing.maxArrival;
   }
 }
 
@@ -135,8 +135,9 @@ void STAEngine::displayCriticalPath() {
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     const Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.fanout.empty() && currentNode.timing.slack < worstSlack) {
-      worstSlack = currentNode.timing.slack;
+    if (currentNode.fanout.empty() &&
+        currentNode.timing.setupSlack < worstSlack) {
+      worstSlack = currentNode.timing.setupSlack;
       worstEndNodeID = currentNodeID;
     }
   }
@@ -146,7 +147,7 @@ void STAEngine::displayCriticalPath() {
             << std::endl;
   while (worstEndNodeID != -1) {
     criticalPath.push_back(worstEndNodeID);
-    worstEndNodeID = graph.getNode(worstEndNodeID).criticalPredecessor;
+    worstEndNodeID = graph.getNode(worstEndNodeID).setupCriticalPredecessor;
   }
   std::reverse(criticalPath.begin(), criticalPath.end());
   std::cout << "\n Critical Path:\n";
@@ -184,9 +185,10 @@ void STAEngine::displayTimingReport() {
        currentNodeId++) {
     const Node &currentNode = graph.getNode(currentNodeId);
     std::cout << std::left << std::setw(COLUMN_WIDTH) << currentNode.name
-              << std::setw(COLUMN_WIDTH) << currentNode.timing.arrival
-              << std::setw(COLUMN_WIDTH) << currentNode.timing.required
-              << std::setw(COLUMN_WIDTH) << currentNode.timing.slack << '\n';
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.maxArrival
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.maxRequired
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.setupSlack
+              << '\n';
   }
   std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
 }

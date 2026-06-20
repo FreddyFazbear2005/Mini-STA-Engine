@@ -8,9 +8,9 @@ using NodeID = int;
 enum class NodeType { primaryInput, primaryOutput, gate, flipFlopD, flipFlopQ };
 
 struct TimingInfo {
-  double arrival = 0.0;
-  double required = std::numeric_limits<double>::infinity();
-  double slack = 0.0;
+  double maxArrival = 0.0;
+  double maxRequired = std::numeric_limits<double>::infinity();
+  double setupSlack = 0.0;
 };
 
 struct Node {
@@ -24,7 +24,7 @@ struct Node {
   std::vector<NodeID> fanin;
   std::vector<NodeID> fanout;
 
-  NodeID criticalPredecessor = -1;
+  NodeID setupCriticalPredecessor = -1;
 
   TimingInfo timing;
 
