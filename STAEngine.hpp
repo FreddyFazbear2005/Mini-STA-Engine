@@ -17,4 +17,5 @@ public:
   void computeSlack();
   void displayCriticalPath();
   void run(double clockPeriod);
+  void displayTimingReport();
 };

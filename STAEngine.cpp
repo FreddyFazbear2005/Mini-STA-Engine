@@ -1,5 +1,7 @@
 #include "STAEngine.hpp"
+#include "Node.hpp"
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <queue>
 #include <stdexcept>
@@ -7,7 +9,8 @@
 STAEngine::STAEngine(TimingGraph &g) : graph(g) {}
 
 void STAEngine::reset() {
-  for (NodeID i = 0; i < graph.size(); ++i) {
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID i = 0; i < numberOfNodes; ++i) {
     Node &node = graph.getNode(i);
     node.timing.arrival = 0;
     node.criticalPredecessor = -1;
@@ -65,7 +68,7 @@ void STAEngine::computeArrivalTimes() {
 
     for (NodeID predecessorNodeID : currentNode.fanin) {
       const Node &predecessorNode = graph.getNode(predecessorNodeID);
-      if (predecessorNode.timing.arrival > maxArrival) {
+      if (predecessorNode.timing.arrival >= maxArrival) {
         maxArrival = predecessorNode.timing.arrival;
         currentNode.criticalPredecessor = predecessorNodeID;
       }
@@ -100,7 +103,8 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
 }
 
 void STAEngine::computeSlack() {
-  for (NodeID currentNodeID = 0; currentNodeID < graph.size();
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     Node &currentNode = graph.getNode(currentNodeID);
     currentNode.timing.slack =
@@ -117,10 +121,11 @@ void STAEngine::displayCriticalPath() {
   NodeID worstEndNodeID = -1;
   double worstSlack = std::numeric_limits<double>::infinity();
 
-  for (NodeID currentNodeID = 0; currentNodeID < graph.size();
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     const Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.timing.slack < worstSlack) {
+    if (currentNode.fanout.empty() && currentNode.timing.slack < worstSlack) {
       worstSlack = currentNode.timing.slack;
       worstEndNodeID = currentNodeID;
     }
@@ -149,4 +154,29 @@ void STAEngine::run(double clockPeriod) {
   computeArrivalTimes();
   computeRequiredTimes(clockPeriod);
   computeSlack();
+}
+
+void STAEngine::displayTimingReport() {
+  constexpr int COLUMN_WIDTH = 15;
+  constexpr int PRECISION = 2;
+
+  std::cout << std::fixed << std::setprecision(PRECISION);
+
+  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
+  std::cout << std::left << std::setw(COLUMN_WIDTH) << "Node"
+            << std::setw(COLUMN_WIDTH) << "Arrival" << std::setw(COLUMN_WIDTH)
+            << "Required" << std::setw(COLUMN_WIDTH) << "Slack" << '\n';
+
+  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
+
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeId = 0; currentNodeId < numberOfNodes;
+       currentNodeId++) {
+    const Node &currentNode = graph.getNode(currentNodeId);
+    std::cout << std::left << std::setw(COLUMN_WIDTH) << currentNode.name
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.arrival
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.required
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.slack << '\n';
+  }
+  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
 }
