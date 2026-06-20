@@ -3,30 +3,33 @@
 int main() {
   TimingGraph graph;
 
-  auto A = graph.addNode("A", NodeType::primaryInput);
-  auto B = graph.addNode("B", NodeType::primaryInput);
+  NodeID ff1Q = graph.addNode("FF1_Q", NodeType::flipFlopQ);
+  NodeID ff2Q = graph.addNode("FF2_Q", NodeType::flipFlopQ);
 
-  auto U1 = graph.addNode("U1");
-  auto U2 = graph.addNode("U2");
-  auto U3 = graph.addNode("U3");
+  NodeID u1 = graph.addNode("U1");
+  NodeID u2 = graph.addNode("U2");
 
-  auto OUT = graph.addNode("OUT", NodeType::primaryOutput);
+  NodeID ff3D = graph.addNode("FF3_D", NodeType::flipFlopD);
 
-  graph.addEdge(A, U1);
-  graph.addEdge(U1, U2);
-  graph.addEdge(U2, OUT);
+  graph.addEdge(ff1Q, u1);
+  graph.addEdge(u1, ff3D);
+  graph.addEdge(ff2Q, u2);
+  graph.addEdge(u2, ff3D);
 
-  graph.addEdge(B, U3);
-  graph.addEdge(U3, OUT);
+  graph.getNode(ff1Q).clockToQ = 0.5;
+  graph.getNode(ff2Q).clockToQ = 0.5;
 
-  graph.getNode(U1).cellDelay = 3.0;
-  graph.getNode(U2).cellDelay = 2.0;
-  graph.getNode(U3).cellDelay = 6.0;
+  graph.getNode(u1).cellDelay = 5.0;
+  graph.getNode(u2).cellDelay = 5.0;
+
+  graph.getNode(ff3D).setupTime = 0.5;
 
   STAEngine sta(graph);
 
-  sta.run(10);
+  sta.run(10.0);
 
   sta.displayTimingReport();
   sta.displayCriticalPath();
+
+  return 0;
 }

@@ -74,7 +74,15 @@ void STAEngine::computeArrivalTimes() {
       }
     }
 
-    currentNode.timing.arrival = maxArrival + currentNode.cellDelay;
+    if (currentNode.type ==
+        NodeType::flipFlopQ) { // FF_Q is treated as a timing start point, graph
+                               // must be constructed to reflect this Arrival is
+                               // initialized to clock to Q delay and does not
+                               // depend on predecessor nodes.
+      currentNode.timing.arrival = currentNode.clockToQ;
+    } else {
+      currentNode.timing.arrival = maxArrival + currentNode.cellDelay;
+    }
   }
 }
 
@@ -85,8 +93,10 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
 
   for (NodeID currentNodeID : sortedNodes) {
     Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.fanout.empty() == true) {
+    if (currentNode.type == NodeType::primaryOutput) {
       currentNode.timing.required = clockPeriod;
+    } else if (currentNode.type == NodeType::flipFlopD) {
+      currentNode.timing.required = clockPeriod - currentNode.setupTime;
     }
   }
 
