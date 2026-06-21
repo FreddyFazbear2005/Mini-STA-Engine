@@ -9,8 +9,11 @@ enum class NodeType { primaryInput, primaryOutput, gate, flipFlopD, flipFlopQ };
 
 struct TimingInfo {
   double maxArrival = 0.0;
-  double maxRequired = std::numeric_limits<double>::infinity();
+  double required = std::numeric_limits<double>::infinity();
   double setupSlack = 0.0;
+
+  double minArrival = std::numeric_limits<double>::infinity();
+  double holdSlack = 0.0;
 };
 
 struct Node {
@@ -25,6 +28,7 @@ struct Node {
   std::vector<NodeID> fanout;
 
   NodeID setupCriticalPredecessor = -1;
+  NodeID holdCriticalPredecessor = -1;
 
   TimingInfo timing;
 

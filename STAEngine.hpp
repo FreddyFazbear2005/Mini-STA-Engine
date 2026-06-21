@@ -12,11 +12,13 @@ public:
 
   void reset();
   std::vector<NodeID> topologicalSort();
-  void computeArrivalTimes();
   void computeMinArrivalTimes();
-  void computeRequiredTimes(double clockPeriod);
-  void computeSlack();
+  void computeMaxArrivalTimes();
+  void computeMaxRequiredTimes(double clockPeriod);
+  void computeSetupSlack();
+  void computeHoldSlack();
   void displayCriticalPath();
+  void displayHoldCriticalPath();
   void run(double clockPeriod);
   void displayTimingReport();
 };

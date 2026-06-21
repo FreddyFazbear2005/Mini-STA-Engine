@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <queue>
 #include <stdexcept>
 
@@ -14,8 +15,10 @@ void STAEngine::reset() {
     Node &node = graph.getNode(i);
     node.timing.maxArrival = 0;
     node.setupCriticalPredecessor = -1;
-    node.timing.maxRequired = std::numeric_limits<double>::infinity();
+    node.timing.required = std::numeric_limits<double>::infinity();
     node.timing.setupSlack = 0;
+    node.timing.holdSlack = 0;
+    node.holdCriticalPredecessor = -1;
   }
 }
 
@@ -58,7 +61,7 @@ std::vector<NodeID> STAEngine::topologicalSort() {
   return result;
 }
 
-void STAEngine::computeArrivalTimes() {
+void STAEngine::computeMaxArrivalTimes() {
   std::vector<NodeID> sortedNodes = topologicalSort();
 
   for (NodeID currentNodeID : sortedNodes) {
@@ -86,7 +89,42 @@ void STAEngine::computeArrivalTimes() {
   }
 }
 
-void STAEngine::computeRequiredTimes(double clockPeriod) {
+void STAEngine::computeMinArrivalTimes() {
+  std::vector<NodeID> sortedNodes = topologicalSort();
+
+  for (NodeID currentNodeID : sortedNodes) {
+    Node &currentNode = graph.getNode(currentNodeID);
+
+    if (currentNode.fanin.empty() && currentNode.type == NodeType::gate) {
+      throw std::runtime_error("Gate has no fanin");
+    }
+
+    double minArrival = std::numeric_limits<double>::infinity();
+
+    for (NodeID predecessorNodeID : currentNode.fanin) {
+      const Node &predecessorNode = graph.getNode(predecessorNodeID);
+      if (predecessorNode.timing.minArrival <= minArrival) {
+        minArrival = predecessorNode.timing.minArrival;
+        currentNode.holdCriticalPredecessor = predecessorNodeID;
+      }
+    }
+
+    if (currentNode.type ==
+        NodeType::flipFlopQ) { // FF_Q is treated as a timing start point, graph
+                               // must be constructed to reflect this Arrival is
+                               // initialized to clock to Q delay and does not
+                               // depend on predecessor nodes.
+      currentNode.timing.minArrival = currentNode.clockToQ;
+
+    } else if (currentNode.type == NodeType::primaryInput) {
+      currentNode.timing.minArrival = 0.0;
+    } else {
+      currentNode.timing.minArrival = minArrival + currentNode.cellDelay;
+    }
+  }
+}
+
+void STAEngine::computeMaxRequiredTimes(double clockPeriod) {
   std::vector<NodeID> sortedNodes = topologicalSort();
 
   // At the end points the nodes will have a requirement of clockPeriod
@@ -94,9 +132,9 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
   for (NodeID currentNodeID : sortedNodes) {
     Node &currentNode = graph.getNode(currentNodeID);
     if (currentNode.type == NodeType::primaryOutput) {
-      currentNode.timing.maxRequired = clockPeriod;
+      currentNode.timing.required = clockPeriod;
     } else if (currentNode.type == NodeType::flipFlopD) {
-      currentNode.timing.maxRequired = clockPeriod - currentNode.setupTime;
+      currentNode.timing.required = clockPeriod - currentNode.setupTime;
     }
   }
 
@@ -105,20 +143,33 @@ void STAEngine::computeRequiredTimes(double clockPeriod) {
     Node &currentNode = graph.getNode(*currentNodeIterator);
     for (NodeID successorNodeID : currentNode.fanout) {
       const Node &successorNode = graph.getNode(successorNodeID);
-      currentNode.timing.maxRequired =
-          std::min(currentNode.timing.maxRequired,
-                   successorNode.timing.maxRequired - successorNode.cellDelay);
+      currentNode.timing.required =
+          std::min(currentNode.timing.required,
+                   successorNode.timing.required - successorNode.cellDelay);
     }
   }
 }
 
-void STAEngine::computeSlack() {
+void STAEngine::computeSetupSlack() {
   const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     Node &currentNode = graph.getNode(currentNodeID);
     currentNode.timing.setupSlack =
-        currentNode.timing.maxRequired - currentNode.timing.maxArrival;
+        currentNode.timing.required - currentNode.timing.maxArrival;
+  }
+}
+
+void STAEngine::computeHoldSlack() {
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
+       currentNodeID++) {
+    Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.type == NodeType::flipFlopD) {
+      currentNode.timing.holdSlack =
+          currentNode.timing.minArrival - currentNode.holdTime;
+    }
   }
 }
 
@@ -160,11 +211,60 @@ void STAEngine::displayCriticalPath() {
   std::cout << std::endl;
 }
 
+void STAEngine::displayHoldCriticalPath() {
+  if (graph.size() == 0) {
+    std::cout << "The graph is empty" << std::endl;
+    return;
+  }
+  NodeID worstEndNodeID = -1;
+  double worstHoldSlack = std::numeric_limits<double>::infinity();
+
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
+       currentNodeID++) {
+    const Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.type == NodeType::flipFlopD &&
+        currentNode.timing.holdSlack < worstHoldSlack) {
+      worstHoldSlack = currentNode.timing.holdSlack;
+      worstEndNodeID = currentNodeID;
+    }
+  }
+
+  if (worstEndNodeID == -1) {
+    std::cout << "No hold endpoints found\n";
+    return;
+  }
+
+  std::vector<NodeID> criticalPath;
+  std::cout << "Worst Hold Slack : " << worstHoldSlack << " ns\n" << std::endl;
+  if (worstHoldSlack < 0.0) {
+    std::cout << "HOLD VIOLATION\n\n";
+  }
+  while (worstEndNodeID != -1) {
+    criticalPath.push_back(worstEndNodeID);
+    worstEndNodeID = graph.getNode(worstEndNodeID).holdCriticalPredecessor;
+  }
+  std::reverse(criticalPath.begin(), criticalPath.end());
+  std::cout << "\n Worst Hold Path:\n";
+  for (size_t i = 0; i < criticalPath.size(); ++i) {
+    std::cout << graph.getNode(criticalPath[i]).name;
+    if (i + 1 != criticalPath.size()) {
+      std::cout << " -> ";
+    }
+  }
+  std::cout << std::endl;
+}
+
 void STAEngine::run(double clockPeriod) {
   reset();
-  computeArrivalTimes();
-  computeRequiredTimes(clockPeriod);
-  computeSlack();
+  // Setup analysis
+  computeMaxArrivalTimes();
+  computeMaxRequiredTimes(clockPeriod);
+  computeSetupSlack();
+
+  // Hold analysis
+  computeMinArrivalTimes();
+  computeHoldSlack();
 }
 
 void STAEngine::displayTimingReport() {
@@ -173,12 +273,14 @@ void STAEngine::displayTimingReport() {
 
   std::cout << std::fixed << std::setprecision(PRECISION);
 
-  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
+  std::cout << std::string(6 * COLUMN_WIDTH, '-') << '\n';
   std::cout << std::left << std::setw(COLUMN_WIDTH) << "Node"
-            << std::setw(COLUMN_WIDTH) << "Arrival" << std::setw(COLUMN_WIDTH)
-            << "Required" << std::setw(COLUMN_WIDTH) << "Slack" << '\n';
+            << std::setw(COLUMN_WIDTH) << "MaxArrival"
+            << std::setw(COLUMN_WIDTH) << "Required" << std::setw(COLUMN_WIDTH)
+            << "SetupSlack" << std::setw(COLUMN_WIDTH) << "minArrival"
+            << std::setw(COLUMN_WIDTH) << "HoldSlack" << "\n";
 
-  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
+  std::cout << std::string(6 * COLUMN_WIDTH, '-') << '\n';
 
   const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
   for (NodeID currentNodeId = 0; currentNodeId < numberOfNodes;
@@ -186,9 +288,11 @@ void STAEngine::displayTimingReport() {
     const Node &currentNode = graph.getNode(currentNodeId);
     std::cout << std::left << std::setw(COLUMN_WIDTH) << currentNode.name
               << std::setw(COLUMN_WIDTH) << currentNode.timing.maxArrival
-              << std::setw(COLUMN_WIDTH) << currentNode.timing.maxRequired
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.required
               << std::setw(COLUMN_WIDTH) << currentNode.timing.setupSlack
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.minArrival
+              << std::setw(COLUMN_WIDTH) << currentNode.timing.holdSlack
               << '\n';
   }
-  std::cout << std::string(4 * COLUMN_WIDTH, '-') << '\n';
+  std::cout << std::string(6 * COLUMN_WIDTH, '-') << '\n';
 }
