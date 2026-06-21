@@ -11,4 +11,6 @@ private:
   std::unordered_map<std::string, NodeID> nodeMap;
   void parseNode(std::stringstream &ss);
   void parseEdge(std::stringstream &ss);
+  void parseDelay(std::stringstream &ss);
+  void parseClockToQ(std::stringstream &ss);
 };

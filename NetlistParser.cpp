@@ -26,7 +26,6 @@ void NetListParser::parse(const std::string &filename) {
 
     std::stringstream ss(line);
     std::string keyword;
-    ss >> keyword;
 
     if (!(ss >> keyword)) {
       continue;
@@ -36,6 +35,10 @@ void NetListParser::parse(const std::string &filename) {
       parseNode(ss);
     } else if (keyword == "EDGE") {
       parseEdge(ss);
+    } else if (keyword == "DELAY") {
+      parseDelay(ss);
+    } else if (keyword == "CLOCK_TO_Q") {
+      parseClockToQ(ss);
     }
   }
 }
@@ -102,4 +105,71 @@ void NetListParser::parseEdge(std::stringstream &ss) {
   NodeID destinationID = nodeMap.at(destinationName);
 
   graph.addEdge(sourceID, destinationID);
+}
+
+void NetListParser::parseDelay(std::stringstream &ss) {
+  std::string nodeName;
+  double maxCellDelay;
+  double minCellDelay;
+
+  if (!(ss >> nodeName >> maxCellDelay >> minCellDelay)) {
+    throw std::runtime_error("malformed DELAY statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in DELAY statement: " + extra);
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("DELAY references undefined node: " + nodeName);
+  }
+
+  if (maxCellDelay < minCellDelay) {
+    throw std::runtime_error("Max cell delay is lesser than min cell delay");
+  }
+
+  if (maxCellDelay < 0 || minCellDelay < 0) {
+    throw std::runtime_error("Cell delays cannot be NEGATIVE");
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+
+  if (node.type != NodeType::gate) {
+    throw std::runtime_error("DELAY can only be applied to GATE nodes");
+  }
+
+  node.maxCellDelay = maxCellDelay;
+  node.minCellDelay = minCellDelay;
+}
+
+void NetListParser::parseClockToQ(std::stringstream &ss) {
+  std::string nodeName;
+  double clockToQ;
+  if (!(ss >> nodeName >> clockToQ)) {
+    throw std::runtime_error("Malformed CLOCK_TO_Q statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in CLOCK_TO_Q statement: " +
+                             extra);
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("CLOCK_TO_Q references undefined node: " +
+                             nodeName);
+  }
+
+  if (clockToQ < 0) {
+    throw std::runtime_error("Clock to Q cannot be NEGATIVE");
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+  if (node.type != NodeType::flipFlopQ) {
+    throw std::runtime_error("CLOCK_TO_Q can only be applied to FF_Q nodes");
+  }
+  node.clockToQ = clockToQ;
 }
