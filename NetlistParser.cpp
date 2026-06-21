@@ -34,6 +34,8 @@ void NetListParser::parse(const std::string &filename) {
 
     if (keyword == "NODE") {
       parseNode(ss);
+    } else if (keyword == "EDGE") {
+      parseEdge(ss);
     }
   }
 }
@@ -72,4 +74,32 @@ void NetListParser::parseNode(std::stringstream &ss) {
 
   NodeID id = graph.addNode(nodeName, type);
   nodeMap[nodeName] = id;
+}
+
+void NetListParser::parseEdge(std::stringstream &ss) {
+  std::string sourceName;
+  std::string destinationName;
+
+  if (!(ss >> sourceName >> destinationName)) {
+    throw std::runtime_error("Malformed EDGE statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in EDGE statement: " + extra);
+  }
+
+  if (nodeMap.find(sourceName) == nodeMap.end()) {
+    throw std::runtime_error("Source Node " + sourceName + " does not exist");
+  }
+
+  if (nodeMap.find(destinationName) == nodeMap.end()) {
+    throw std::runtime_error("Destination Node " + destinationName +
+                             " does not exist");
+  }
+
+  NodeID sourceID = nodeMap.at(sourceName);
+  NodeID destinationID = nodeMap.at(destinationName);
+
+  graph.addEdge(sourceID, destinationID);
 }
