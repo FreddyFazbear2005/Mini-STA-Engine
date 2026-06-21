@@ -84,7 +84,7 @@ void STAEngine::computeMaxArrivalTimes() {
                                // depend on predecessor nodes.
       currentNode.timing.maxArrival = currentNode.clockToQ;
     } else {
-      currentNode.timing.maxArrival = maxArrival + currentNode.cellDelay;
+      currentNode.timing.maxArrival = maxArrival + currentNode.maxCellDelay;
     }
   }
 }
@@ -119,7 +119,7 @@ void STAEngine::computeMinArrivalTimes() {
     } else if (currentNode.type == NodeType::primaryInput) {
       currentNode.timing.minArrival = 0.0;
     } else {
-      currentNode.timing.minArrival = minArrival + currentNode.cellDelay;
+      currentNode.timing.minArrival = minArrival + currentNode.minCellDelay;
     }
   }
 }
@@ -145,7 +145,7 @@ void STAEngine::computeMaxRequiredTimes(double clockPeriod) {
       const Node &successorNode = graph.getNode(successorNodeID);
       currentNode.timing.required =
           std::min(currentNode.timing.required,
-                   successorNode.timing.required - successorNode.cellDelay);
+                   successorNode.timing.required - successorNode.maxCellDelay);
     }
   }
 }

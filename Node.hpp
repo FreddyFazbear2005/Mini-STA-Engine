@@ -19,7 +19,8 @@ struct TimingInfo {
 struct Node {
   NodeID id;
   std::string name;
-  double cellDelay = 0.0;
+  double maxCellDelay = 0.0;
+  double minCellDelay = 0.0;
 
   NodeType type = NodeType::gate;
   std::string cellType;
