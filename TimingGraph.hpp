@@ -4,6 +4,11 @@
 #include <cstddef>
 #include <vector>
 
+struct TimingPath {
+  NodeID endNodeID;
+  double setupSlack;
+};
+
 class TimingGraph {
 private:
   std::vector<Node> nodes;

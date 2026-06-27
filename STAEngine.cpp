@@ -1,6 +1,8 @@
 #include "STAEngine.hpp"
 #include "Node.hpp"
+#include "TimingGraph.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -209,6 +211,72 @@ void STAEngine::displayCriticalPath() {
     }
   }
   std::cout << std::endl;
+}
+
+void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
+  constexpr int REPORT_WIDTH = 70;
+  constexpr int PRECISION = 2;
+
+  std::cout << std::fixed << std::setprecision(PRECISION);
+
+  if (graph.size() == 0) {
+    std::cout << "The graph is empty" << std::endl;
+    return;
+  }
+
+  std::vector<TimingPath> setupCriticalPaths;
+
+  NodeID worstEndNodeID = -1;
+
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
+       currentNodeID++) {
+    const Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.type == NodeType::flipFlopD ||
+        currentNode.type == NodeType::primaryOutput) {
+      setupCriticalPaths.push_back(
+          TimingPath{currentNodeID, currentNode.timing.setupSlack});
+    }
+  }
+
+  if (setupCriticalPaths.empty() == true) {
+    std::cout << "No setup endpoints found.\n";
+    return;
+  }
+
+  std::sort(setupCriticalPaths.begin(), setupCriticalPaths.end(),
+            [](const TimingPath &a, const TimingPath &b) {
+              return a.setupSlack < b.setupSlack;
+            });
+  size_t pathsToDisplay = std::min(numberofPaths, setupCriticalPaths.size());
+  std::cout << "\nSETUP CRITICAL PATH REPORT\n";
+  std::cout << "Endpoints analyzed : " << setupCriticalPaths.size() << "\n";
+  std::cout << "Displaying " << pathsToDisplay << " paths(s)" << "\n\n";
+
+  for (size_t pathIndex = 0; pathIndex < pathsToDisplay; pathIndex++) {
+    std::vector<NodeID> criticalPath;
+    worstEndNodeID = setupCriticalPaths[pathIndex].endNodeID;
+    while (worstEndNodeID != -1) {
+      criticalPath.push_back(worstEndNodeID);
+      worstEndNodeID = graph.getNode(worstEndNodeID).setupCriticalPredecessor;
+    }
+    std::reverse(criticalPath.begin(), criticalPath.end());
+    std::cout << std::string(REPORT_WIDTH, '-') << '\n';
+    std::cout << "Path " << pathIndex + 1 << "\n";
+    std::cout << "Slack : " << setupCriticalPaths[pathIndex].setupSlack << " ns"
+              << "\n";
+    std::cout << "Endpoint : "
+              << graph.getNode(setupCriticalPaths[pathIndex].endNodeID).name
+              << "\n";
+    std::cout << "Path: \n";
+    for (size_t i = 0; i < criticalPath.size(); ++i) {
+      std::cout << graph.getNode(criticalPath[i]).name;
+      if (i + 1 != criticalPath.size()) {
+        std::cout << " -> ";
+      }
+    }
+    std::cout << std::endl;
+  }
 }
 
 void STAEngine::displayHoldCriticalPath() {
