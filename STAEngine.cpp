@@ -175,44 +175,6 @@ void STAEngine::computeHoldSlack() {
   }
 }
 
-void STAEngine::displayCriticalPath() {
-
-  if (graph.size() == 0) {
-    std::cout << "The graph is empty" << std::endl;
-    return;
-  }
-  NodeID worstEndNodeID = -1;
-  double worstSlack = std::numeric_limits<double>::infinity();
-
-  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
-  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
-       currentNodeID++) {
-    const Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.fanout.empty() &&
-        currentNode.timing.setupSlack < worstSlack) {
-      worstSlack = currentNode.timing.setupSlack;
-      worstEndNodeID = currentNodeID;
-    }
-  }
-
-  std::vector<NodeID> criticalPath;
-  std::cout << "The critical path has a slack of " << worstSlack << " ns\n"
-            << std::endl;
-  while (worstEndNodeID != -1) {
-    criticalPath.push_back(worstEndNodeID);
-    worstEndNodeID = graph.getNode(worstEndNodeID).setupCriticalPredecessor;
-  }
-  std::reverse(criticalPath.begin(), criticalPath.end());
-  std::cout << "\n Critical Path:\n";
-  for (size_t i = 0; i < criticalPath.size(); ++i) {
-    std::cout << graph.getNode(criticalPath[i]).name;
-    if (i + 1 != criticalPath.size()) {
-      std::cout << " -> ";
-    }
-  }
-  std::cout << std::endl;
-}
-
 void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
   constexpr int REPORT_WIDTH = 70;
   constexpr int PRECISION = 2;
@@ -235,7 +197,7 @@ void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
     if (currentNode.type == NodeType::flipFlopD ||
         currentNode.type == NodeType::primaryOutput) {
       setupCriticalPaths.push_back(
-          TimingPath{currentNodeID, currentNode.timing.setupSlack});
+          TimingPath{currentNodeID, currentNode.timing.setupSlack, 0});
     }
   }
 
@@ -249,9 +211,11 @@ void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
               return a.setupSlack < b.setupSlack;
             });
   size_t pathsToDisplay = std::min(numberofPaths, setupCriticalPaths.size());
+  std::cout << "\n\n" << std::string(REPORT_WIDTH, '#');
   std::cout << "\nSETUP CRITICAL PATH REPORT\n";
+  std::cout << std::string(REPORT_WIDTH, '#') << "\n\n";
   std::cout << "Endpoints analyzed : " << setupCriticalPaths.size() << "\n";
-  std::cout << "Displaying " << pathsToDisplay << " paths(s)" << "\n\n";
+  std::cout << "Displaying : " << pathsToDisplay << " paths(s)" << "\n\n";
 
   for (size_t pathIndex = 0; pathIndex < pathsToDisplay; pathIndex++) {
     std::vector<NodeID> criticalPath;
@@ -265,6 +229,9 @@ void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
     std::cout << "Path " << pathIndex + 1 << "\n";
     std::cout << "Slack : " << setupCriticalPaths[pathIndex].setupSlack << " ns"
               << "\n";
+    if (setupCriticalPaths[pathIndex].setupSlack < 0) {
+      std::cout << "SETUP VIOLATION ON THIS PATH\n";
+    }
     std::cout << "Endpoint : "
               << graph.getNode(setupCriticalPaths[pathIndex].endNodeID).name
               << "\n";
@@ -279,48 +246,75 @@ void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
   }
 }
 
-void STAEngine::displayHoldCriticalPath() {
+void STAEngine::displayHoldCriticalPaths(size_t numberofPaths) {
+  constexpr int REPORT_WIDTH = 70;
+  constexpr int PRECISION = 2;
+
+  std::cout << std::fixed << std::setprecision(PRECISION);
+
   if (graph.size() == 0) {
     std::cout << "The graph is empty" << std::endl;
     return;
   }
+
+  std::vector<TimingPath> holdCriticalPaths;
+
   NodeID worstEndNodeID = -1;
-  double worstHoldSlack = std::numeric_limits<double>::infinity();
 
   const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     const Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.type == NodeType::flipFlopD &&
-        currentNode.timing.holdSlack < worstHoldSlack) {
-      worstHoldSlack = currentNode.timing.holdSlack;
-      worstEndNodeID = currentNodeID;
+    if (currentNode.type == NodeType::flipFlopD ||
+        currentNode.type == NodeType::primaryOutput) {
+      holdCriticalPaths.push_back(
+          TimingPath{currentNodeID, 0, currentNode.timing.holdSlack});
     }
   }
 
-  if (worstEndNodeID == -1) {
-    std::cout << "No hold endpoints found\n";
+  if (holdCriticalPaths.empty() == true) {
+    std::cout << "No hold endpoints found.\n";
     return;
   }
 
-  std::vector<NodeID> criticalPath;
-  std::cout << "Worst Hold Slack : " << worstHoldSlack << " ns\n" << std::endl;
-  if (worstHoldSlack < 0.0) {
-    std::cout << "HOLD VIOLATION\n\n";
-  }
-  while (worstEndNodeID != -1) {
-    criticalPath.push_back(worstEndNodeID);
-    worstEndNodeID = graph.getNode(worstEndNodeID).holdCriticalPredecessor;
-  }
-  std::reverse(criticalPath.begin(), criticalPath.end());
-  std::cout << "\n Worst Hold Path:\n";
-  for (size_t i = 0; i < criticalPath.size(); ++i) {
-    std::cout << graph.getNode(criticalPath[i]).name;
-    if (i + 1 != criticalPath.size()) {
-      std::cout << " -> ";
+  std::sort(holdCriticalPaths.begin(), holdCriticalPaths.end(),
+            [](const TimingPath &a, const TimingPath &b) {
+              return a.holdSlack < b.holdSlack;
+            });
+  size_t pathsToDisplay = std::min(numberofPaths, holdCriticalPaths.size());
+  std::cout << "\n\n" << std::string(REPORT_WIDTH, '#');
+  std::cout << "\nHOLD CRITICAL PATH REPORT\n";
+  std::cout << std::string(REPORT_WIDTH, '#') << "\n\n";
+  std::cout << "Endpoints analyzed : " << holdCriticalPaths.size() << "\n";
+  std::cout << "Displaying : " << pathsToDisplay << " path(s)" << "\n\n";
+
+  for (size_t pathIndex = 0; pathIndex < pathsToDisplay; pathIndex++) {
+    std::vector<NodeID> criticalPath;
+    worstEndNodeID = holdCriticalPaths[pathIndex].endNodeID;
+    while (worstEndNodeID != -1) {
+      criticalPath.push_back(worstEndNodeID);
+      worstEndNodeID = graph.getNode(worstEndNodeID).holdCriticalPredecessor;
     }
+    std::reverse(criticalPath.begin(), criticalPath.end());
+    std::cout << std::string(REPORT_WIDTH, '-') << '\n';
+    std::cout << "Path " << pathIndex + 1 << "\n";
+    std::cout << "Slack : " << holdCriticalPaths[pathIndex].holdSlack << " ns"
+              << "\n";
+    if (holdCriticalPaths[pathIndex].holdSlack < 0) {
+      std::cout << "HOLD VIOLATION ON THIS PATH\n";
+    }
+    std::cout << "Endpoint : "
+              << graph.getNode(holdCriticalPaths[pathIndex].endNodeID).name
+              << "\n";
+    std::cout << "Path: \n";
+    for (size_t i = 0; i < criticalPath.size(); ++i) {
+      std::cout << graph.getNode(criticalPath[i]).name;
+      if (i + 1 != criticalPath.size()) {
+        std::cout << " -> ";
+      }
+    }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
 }
 
 void STAEngine::run(double clockPeriod) {

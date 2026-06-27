@@ -12,6 +12,6 @@ int main() {
   sta.run(10);
 
   sta.displayTimingReport();
-  sta.displayCriticalPath();
-  sta.displayHoldCriticalPath();
+  sta.displaySetupCriticalPaths(5);
+  sta.displayHoldCriticalPaths(5);
 }

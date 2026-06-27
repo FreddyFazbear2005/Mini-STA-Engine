@@ -17,9 +17,7 @@ public:
   void computeMaxRequiredTimes(double clockPeriod);
   void computeSetupSlack();
   void computeHoldSlack();
-  void displayCriticalPath();
   void displaySetupCriticalPaths(size_t numberofPaths);
-  void displayHoldCriticalPath();
   void displayHoldCriticalPaths(size_t numberofPaths);
   void run(double clockPeriod);
   void displayTimingReport();

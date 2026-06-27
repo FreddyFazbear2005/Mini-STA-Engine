@@ -7,6 +7,7 @@
 struct TimingPath {
   NodeID endNodeID;
   double setupSlack;
+  double holdSlack;
 };
 
 class TimingGraph {
