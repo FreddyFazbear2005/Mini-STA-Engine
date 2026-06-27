@@ -13,4 +13,6 @@ private:
   void parseEdge(std::stringstream &ss);
   void parseDelay(std::stringstream &ss);
   void parseClockToQ(std::stringstream &ss);
+  void parseSetup(std::stringstream &ss);
+  void parseHold(std::stringstream &ss);
 };

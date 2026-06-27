@@ -39,6 +39,12 @@ void NetListParser::parse(const std::string &filename) {
       parseDelay(ss);
     } else if (keyword == "CLOCK_TO_Q") {
       parseClockToQ(ss);
+    } else if (keyword == "SETUP") {
+      parseSetup(ss);
+    } else if (keyword == "HOLD") {
+      parseHold(ss);
+    } else {
+      throw std::runtime_error("Unknown keyword: " + keyword);
     }
   }
 }
@@ -113,7 +119,7 @@ void NetListParser::parseDelay(std::stringstream &ss) {
   double minCellDelay;
 
   if (!(ss >> nodeName >> maxCellDelay >> minCellDelay)) {
-    throw std::runtime_error("malformed DELAY statement");
+    throw std::runtime_error("Malformed DELAY statement");
   }
 
   std::string extra;
@@ -172,4 +178,62 @@ void NetListParser::parseClockToQ(std::stringstream &ss) {
     throw std::runtime_error("CLOCK_TO_Q can only be applied to FF_Q nodes");
   }
   node.clockToQ = clockToQ;
+}
+
+void NetListParser::parseSetup(std::stringstream &ss) {
+  std::string nodeName;
+  double setupTime;
+
+  if (!(ss >> nodeName >> setupTime)) {
+    throw std::runtime_error("Malformed SETUP statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in SETUP statement: " + extra);
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("SETUP references undefined node: " + nodeName);
+  }
+
+  if (setupTime < 0) {
+    throw std::runtime_error("SETUP cannot be NEGATIVE");
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+  if (node.type != NodeType::flipFlopD) {
+    throw std::runtime_error("SETUP can only be applied to FF_D nodes");
+  }
+  node.setupTime = setupTime;
+}
+
+void NetListParser::parseHold(std::stringstream &ss) {
+  std::string nodeName;
+  double holdTime;
+
+  if (!(ss >> nodeName >> holdTime)) {
+    throw std::runtime_error("Malformed HOLD statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in HOLD statement: " + extra);
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("HOLD references undefined node: " + nodeName);
+  }
+
+  if (holdTime < 0) {
+    throw std::runtime_error("HOLD cannot be NEGATIVE");
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+  if (node.type != NodeType::flipFlopD) {
+    throw std::runtime_error("HOLD can only be applied to FF_D nodes");
+  }
+  node.holdTime = holdTime;
 }
