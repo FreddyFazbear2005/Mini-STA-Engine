@@ -43,6 +43,8 @@ void NetListParser::parse(const std::string &filename) {
       parseSetup(ss);
     } else if (keyword == "HOLD") {
       parseHold(ss);
+    } else if (keyword == "CLOCK_PERIOD") {
+      parseClockPeriod(ss);
     } else {
       throw std::runtime_error("Unknown keyword: " + keyword);
     }
@@ -236,4 +238,28 @@ void NetListParser::parseHold(std::stringstream &ss) {
     throw std::runtime_error("HOLD can only be applied to FF_D nodes");
   }
   node.holdTime = holdTime;
+}
+
+void NetListParser::parseClockPeriod(std::stringstream &ss) {
+  if (clockPeriod != -1) {
+    throw std::runtime_error("CLOCK_PERIOD specified more than once");
+  }
+  if (!(ss >> clockPeriod)) {
+    throw std::runtime_error("Malformed CLOCK_PERIOD statement");
+  }
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in CLOCK_PERIOD statement: " +
+                             extra);
+  }
+  if (clockPeriod <= 0) {
+    throw std::runtime_error("CLOCK_PERIOD must be greater than zero");
+  }
+}
+
+double NetListParser::getClockPeriod() const {
+  if (clockPeriod < 0) {
+    throw std::runtime_error("CLOCK_PERIOD not specified");
+  }
+  return clockPeriod;
 }

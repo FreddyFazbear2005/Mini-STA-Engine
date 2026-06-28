@@ -1,7 +1,7 @@
 # ==========================
 # Example STA Netlist
 # ==========================
-
+CLOCK_PERIOD 10 
 # Nodes
 NODE FF1_Q FF_Q
 NODE FF2_Q FF_Q
