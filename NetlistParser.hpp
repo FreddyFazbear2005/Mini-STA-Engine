@@ -1,3 +1,4 @@
+#pragma once
 #include "TimingGraph.hpp"
 #include <sstream>
 #include <unordered_map>

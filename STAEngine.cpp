@@ -215,7 +215,7 @@ void STAEngine::displaySetupCriticalPaths(size_t numberofPaths) {
   std::cout << "\nSETUP CRITICAL PATH REPORT\n";
   std::cout << std::string(REPORT_WIDTH, '#') << "\n\n";
   std::cout << "Endpoints analyzed : " << setupCriticalPaths.size() << "\n";
-  std::cout << "Displaying : " << pathsToDisplay << " paths(s)" << "\n\n";
+  std::cout << "Displaying : " << pathsToDisplay << " path(s)" << "\n\n";
 
   for (size_t pathIndex = 0; pathIndex < pathsToDisplay; pathIndex++) {
     std::vector<NodeID> criticalPath;
