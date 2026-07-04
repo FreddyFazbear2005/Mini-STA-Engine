@@ -19,4 +19,5 @@ private:
   void parseSetup(std::stringstream &ss);
   void parseHold(std::stringstream &ss);
   void parseClockPeriod(std::stringstream &ss);
+  void validate() const;
 };

@@ -49,6 +49,8 @@ void NetListParser::parse(const std::string &filename) {
       throw std::runtime_error("Unknown keyword: " + keyword);
     }
   }
+  file.close();
+  validate();
 }
 
 void NetListParser::parseNode(std::stringstream &ss) {
@@ -148,8 +150,13 @@ void NetListParser::parseDelay(std::stringstream &ss) {
     throw std::runtime_error("DELAY can only be applied to GATE nodes");
   }
 
+  if (node.hasDelay == true) {
+    throw std::runtime_error("DUPLICATE DELAY FOR NODE " + node.name);
+  }
+
   node.maxCellDelay = maxCellDelay;
   node.minCellDelay = minCellDelay;
+  node.hasDelay = true;
 }
 
 void NetListParser::parseClockToQ(std::stringstream &ss) {
@@ -179,7 +186,11 @@ void NetListParser::parseClockToQ(std::stringstream &ss) {
   if (node.type != NodeType::flipFlopQ) {
     throw std::runtime_error("CLOCK_TO_Q can only be applied to FF_Q nodes");
   }
+  if (node.hasClockToQ == true) {
+    throw std::runtime_error("DUPLICATE CLOCK_TO_Q FOR NODE " + node.name);
+  }
   node.clockToQ = clockToQ;
+  node.hasClockToQ = true;
 }
 
 void NetListParser::parseSetup(std::stringstream &ss) {
@@ -208,7 +219,11 @@ void NetListParser::parseSetup(std::stringstream &ss) {
   if (node.type != NodeType::flipFlopD) {
     throw std::runtime_error("SETUP can only be applied to FF_D nodes");
   }
+  if (node.hasSetupTime == true) {
+    throw std::runtime_error("DUPLICATE SETUP TIME FOR NODE " + node.name);
+  }
   node.setupTime = setupTime;
+  node.hasSetupTime = true;
 }
 
 void NetListParser::parseHold(std::stringstream &ss) {
@@ -237,7 +252,11 @@ void NetListParser::parseHold(std::stringstream &ss) {
   if (node.type != NodeType::flipFlopD) {
     throw std::runtime_error("HOLD can only be applied to FF_D nodes");
   }
+  if (node.hasHoldTime == true) {
+    throw std::runtime_error("DUPLICATE HOLD TIME FOR NODE " + node.name);
+  }
   node.holdTime = holdTime;
+  node.hasHoldTime = true;
 }
 
 void NetListParser::parseClockPeriod(std::stringstream &ss) {
@@ -257,9 +276,71 @@ void NetListParser::parseClockPeriod(std::stringstream &ss) {
   }
 }
 
-double NetListParser::getClockPeriod() const {
+double NetListParser::getClockPeriod() const { return clockPeriod; }
+
+void NetListParser::validate() const {
   if (clockPeriod < 0) {
     throw std::runtime_error("CLOCK_PERIOD not specified");
   }
-  return clockPeriod;
+  for (const Node &currentNode : graph.getNodes()) {
+    if (currentNode.type == NodeType::primaryInput) {
+      if (currentNode.fanin.empty() == false) {
+        throw std::runtime_error("PRIMARY INPUT " + currentNode.name +
+                                 " SHOULD NOT HAVE FANIN");
+      }
+      if (currentNode.fanout.empty() == true) {
+        throw std::runtime_error("PRIMARY INPUT " + currentNode.name +
+                                 " HAS NO FANOUT");
+      }
+    } else if (currentNode.type == NodeType::primaryOutput) {
+      if (currentNode.fanin.empty() == true) {
+        throw std::runtime_error("PRIMARY OUTPUT " + currentNode.name +
+                                 " HAS NO FANIN");
+      }
+      if (currentNode.fanout.empty() == false) {
+        throw std::runtime_error("PRIMARY OUTPUT " + currentNode.name +
+                                 " SHOULD NOT HAVE FANOUT");
+      }
+    } else if (currentNode.type == NodeType::gate) {
+      if (currentNode.fanin.empty() == true) {
+        throw std::runtime_error("GATE " + currentNode.name + " HAS NO FANIN");
+      }
+      if (currentNode.fanout.empty() == true) {
+        throw std::runtime_error("GATE " + currentNode.name + " HAS NO FANOUT");
+      }
+      if (currentNode.hasDelay == false) {
+        throw std::runtime_error("GATE " + currentNode.name + " HAS NO DELAY");
+      }
+    } else if (currentNode.type == NodeType::flipFlopQ) {
+      if (currentNode.fanin.empty() == false) {
+        throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
+                                 " CANNOT HAVE FANIN");
+      }
+      if (currentNode.hasClockToQ == false) {
+        throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
+                                 " HAS NO CLOCK_TO_Q");
+      }
+      if (currentNode.fanout.empty() == true) {
+        throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
+                                 " HAS NO FANOUT");
+      }
+    } else if (currentNode.type == NodeType::flipFlopD) {
+      if (currentNode.fanin.empty() == true) {
+        throw std::runtime_error("FLIP FLOP D " + currentNode.name +
+                                 " HAS NO FANIN");
+      }
+      if (currentNode.fanout.empty() == false) {
+        throw std::runtime_error("FLIP FLOP D " + currentNode.name +
+                                 " CANNOT HAVE FANOUT");
+      }
+      if (currentNode.hasSetupTime == false) {
+        throw std::runtime_error("FLIP FLOP D " + currentNode.name +
+                                 " HAS NO SETUP TIME");
+      }
+      if (currentNode.hasHoldTime == false) {
+        throw std::runtime_error("FLIP FLOP D " + currentNode.name +
+                                 " HAS NO HOLD TIME");
+      }
+    }
+  }
 }

@@ -37,6 +37,11 @@ struct Node {
   double holdTime = 0.0;
   double clockToQ = 0.0;
 
+  bool hasDelay = false;
+  bool hasSetupTime = false;
+  bool hasHoldTime = false;
+  bool hasClockToQ = false;
+
   Node(NodeID nodeID, const std::string &nodeName,
        NodeType nodeType = NodeType::gate)
       : id(nodeID), name(nodeName), type(nodeType) {}
