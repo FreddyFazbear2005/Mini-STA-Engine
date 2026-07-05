@@ -23,5 +23,7 @@ private:
   void parseHold(std::stringstream &ss);
   void parseClockPeriod(std::stringstream &ss);
   void parseClockUncertainty(std::stringstream &ss);
+  void parseInputDelay(std::stringstream &ss);
+  void parseOutputDelay(std::stringstream &ss);
   void validate() const;
 };

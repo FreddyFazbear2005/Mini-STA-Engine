@@ -47,6 +47,10 @@ void NetListParser::parse(const std::string &filename) {
       parseClockPeriod(ss);
     } else if (keyword == "CLOCK_UNCERTAINTY") {
       parseClockUncertainty(ss);
+    } else if (keyword == "INPUT_DELAY") {
+      parseInputDelay(ss);
+    } else if (keyword == "OUTPUT_DELAY") {
+      parseOutputDelay(ss);
     } else {
       throw std::runtime_error("Unknown keyword: " + keyword);
     }
@@ -294,6 +298,84 @@ void NetListParser::parseClockUncertainty(std::stringstream &ss) {
     throw std::runtime_error("CLOCK_UNCERTAINTY cannot be NEGATIVE");
   }
   hasClockUncertainty = true;
+}
+
+void NetListParser::parseInputDelay(std::stringstream &ss) {
+  std::string nodeName;
+  double inputDelay;
+
+  if (!(ss >> nodeName >> inputDelay)) {
+    throw std::runtime_error("Malformed INPUT_DELAY statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in INPUT_DELAY statement: " +
+                             extra);
+  }
+
+  if (inputDelay < 0) {
+    throw std::runtime_error("INPUT_DELAY cannot be NEGATIVE");
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("INPUT_DELAY references undefined node: " +
+                             nodeName);
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+
+  if (node.type != NodeType::primaryInput) {
+    throw std::runtime_error(
+        "INPUT_DELAY can only be applied to PRIMARY INPUT");
+  }
+
+  if (node.hasInputDelay == true) {
+    throw std::runtime_error("DUPLICATE INPUT_DELAY FOR NODE " + node.name);
+  }
+
+  node.inputDelay = inputDelay;
+  node.hasInputDelay = true;
+}
+
+void NetListParser::parseOutputDelay(std::stringstream &ss) {
+  std::string nodeName;
+  double outputDelay;
+
+  if (!(ss >> nodeName >> outputDelay)) {
+    throw std::runtime_error("Malformed OUTPUT_DELAY statement");
+  }
+
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error("Unexpected token in OUTPUT_DELAY statement: " +
+                             extra);
+  }
+
+  if (outputDelay < 0) {
+    throw std::runtime_error("OUTPUT_DELAY cannot be NEGATIVE");
+  }
+
+  if (nodeMap.find(nodeName) == nodeMap.end()) {
+    throw std::runtime_error("OUTPUT_DELAY references undefined node: " +
+                             nodeName);
+  }
+
+  NodeID nodeID = nodeMap.at(nodeName);
+  Node &node = graph.getNode(nodeID);
+
+  if (node.type != NodeType::primaryOutput) {
+    throw std::runtime_error(
+        "OUTPUT_DELAY can only be applied to PRIMARY OUTPUT");
+  }
+
+  if (node.hasOutputDelay == true) {
+    throw std::runtime_error("DUPLICATE OUTPUT_DELAY FOR NODE " + node.name);
+  }
+
+  node.outputDelay = outputDelay;
+  node.hasOutputDelay = true;
 }
 
 double NetListParser::getClockPeriod() const { return clockPeriod; }

@@ -21,6 +21,8 @@ struct Node {
   std::string name;
   double maxCellDelay = 0.0;
   double minCellDelay = 0.0;
+  double inputDelay = 0.0;
+  double outputDelay = 0.0;
 
   NodeType type = NodeType::gate;
   std::string cellType;
@@ -41,6 +43,8 @@ struct Node {
   bool hasSetupTime = false;
   bool hasHoldTime = false;
   bool hasClockToQ = false;
+  bool hasInputDelay = false;
+  bool hasOutputDelay = false;
 
   Node(NodeID nodeID, const std::string &nodeName,
        NodeType nodeType = NodeType::gate)

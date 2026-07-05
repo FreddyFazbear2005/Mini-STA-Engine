@@ -86,6 +86,8 @@ void STAEngine::computeMaxArrivalTimes() {
                                // initialized to clock to Q delay and does not
                                // depend on predecessor nodes.
       currentNode.timing.maxArrival = currentNode.clockToQ;
+    } else if (currentNode.type == NodeType::primaryInput) {
+      currentNode.timing.maxArrival = currentNode.inputDelay;
     } else {
       currentNode.timing.maxArrival = maxArrival + currentNode.maxCellDelay;
     }
@@ -120,7 +122,7 @@ void STAEngine::computeMinArrivalTimes() {
       currentNode.timing.minArrival = currentNode.clockToQ;
 
     } else if (currentNode.type == NodeType::primaryInput) {
-      currentNode.timing.minArrival = 0.0;
+      currentNode.timing.minArrival = currentNode.inputDelay;
     } else {
       currentNode.timing.minArrival = minArrival + currentNode.minCellDelay;
     }
@@ -136,7 +138,7 @@ void STAEngine::computeMaxRequiredTimes(double clockPeriod,
   for (NodeID currentNodeID : sortedNodes) {
     Node &currentNode = graph.getNode(currentNodeID);
     if (currentNode.type == NodeType::primaryOutput) {
-      currentNode.timing.required = clockPeriod;
+      currentNode.timing.required = clockPeriod - currentNode.outputDelay;
     } else if (currentNode.type == NodeType::flipFlopD) {
       currentNode.timing.required =
           clockPeriod - currentNode.setupTime - clockUncertainty;
@@ -268,8 +270,7 @@ void STAEngine::displayHoldCriticalPaths(size_t numberofPaths) {
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     const Node &currentNode = graph.getNode(currentNodeID);
-    if (currentNode.type == NodeType::flipFlopD ||
-        currentNode.type == NodeType::primaryOutput) {
+    if (currentNode.type == NodeType::flipFlopD) {
       holdCriticalPaths.push_back(
           TimingPath{currentNodeID, 0, currentNode.timing.holdSlack});
     }
