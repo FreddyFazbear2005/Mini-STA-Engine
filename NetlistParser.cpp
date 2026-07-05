@@ -45,6 +45,8 @@ void NetListParser::parse(const std::string &filename) {
       parseHold(ss);
     } else if (keyword == "CLOCK_PERIOD") {
       parseClockPeriod(ss);
+    } else if (keyword == "CLOCK_UNCERTAINTY") {
+      parseClockUncertainty(ss);
     } else {
       throw std::runtime_error("Unknown keyword: " + keyword);
     }
@@ -276,7 +278,27 @@ void NetListParser::parseClockPeriod(std::stringstream &ss) {
   }
 }
 
+void NetListParser::parseClockUncertainty(std::stringstream &ss) {
+  if (hasClockUncertainty == true) {
+    throw std::runtime_error("CLOCK_UNCERTAINTY specified more than once");
+  }
+  if (!(ss >> clockUncertainty)) {
+    throw std::runtime_error("Malformed CLOCK_UNCERTAINTY statement");
+  }
+  std::string extra;
+  if (ss >> extra) {
+    throw std::runtime_error(
+        "Unexpected token in CLOCK_UNCERTAINTY statement: " + extra);
+  }
+  if (clockUncertainty < 0) {
+    throw std::runtime_error("CLOCK_UNCERTAINTY cannot be NEGATIVE");
+  }
+  hasClockUncertainty = true;
+}
+
 double NetListParser::getClockPeriod() const { return clockPeriod; }
+
+double NetListParser::getClockUncertainty() const { return clockUncertainty; }
 
 void NetListParser::validate() const {
   if (clockPeriod < 0) {

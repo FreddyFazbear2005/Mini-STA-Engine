@@ -9,7 +9,7 @@ int main() {
 
   STAEngine sta(graph);
 
-  sta.run(parser.getClockPeriod());
+  sta.run(parser.getClockPeriod(), parser.getClockUncertainty());
 
   sta.displayTimingReport();
   sta.displaySetupCriticalPaths(5);

@@ -16,6 +16,7 @@ void STAEngine::reset() {
   for (NodeID i = 0; i < numberOfNodes; ++i) {
     Node &node = graph.getNode(i);
     node.timing.maxArrival = 0;
+    node.timing.minArrival = std::numeric_limits<double>::infinity();
     node.setupCriticalPredecessor = -1;
     node.timing.required = std::numeric_limits<double>::infinity();
     node.timing.setupSlack = 0;
@@ -126,7 +127,8 @@ void STAEngine::computeMinArrivalTimes() {
   }
 }
 
-void STAEngine::computeMaxRequiredTimes(double clockPeriod) {
+void STAEngine::computeMaxRequiredTimes(double clockPeriod,
+                                        double clockUncertainty) {
   std::vector<NodeID> sortedNodes = topologicalSort();
 
   // At the end points the nodes will have a requirement of clockPeriod
@@ -136,7 +138,8 @@ void STAEngine::computeMaxRequiredTimes(double clockPeriod) {
     if (currentNode.type == NodeType::primaryOutput) {
       currentNode.timing.required = clockPeriod;
     } else if (currentNode.type == NodeType::flipFlopD) {
-      currentNode.timing.required = clockPeriod - currentNode.setupTime;
+      currentNode.timing.required =
+          clockPeriod - currentNode.setupTime - clockUncertainty;
     }
   }
 
@@ -162,15 +165,15 @@ void STAEngine::computeSetupSlack() {
   }
 }
 
-void STAEngine::computeHoldSlack() {
+void STAEngine::computeHoldSlack(double clockUncertainty) {
   const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
 
   for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
        currentNodeID++) {
     Node &currentNode = graph.getNode(currentNodeID);
     if (currentNode.type == NodeType::flipFlopD) {
-      currentNode.timing.holdSlack =
-          currentNode.timing.minArrival - currentNode.holdTime;
+      currentNode.timing.holdSlack = currentNode.timing.minArrival -
+                                     currentNode.holdTime - clockUncertainty;
     }
   }
 }
@@ -317,16 +320,16 @@ void STAEngine::displayHoldCriticalPaths(size_t numberofPaths) {
   }
 }
 
-void STAEngine::run(double clockPeriod) {
+void STAEngine::run(double clockPeriod, double clockUncertainty) {
   reset();
   // Setup analysis
   computeMaxArrivalTimes();
-  computeMaxRequiredTimes(clockPeriod);
+  computeMaxRequiredTimes(clockPeriod, clockUncertainty);
   computeSetupSlack();
 
   // Hold analysis
   computeMinArrivalTimes();
-  computeHoldSlack();
+  computeHoldSlack(clockUncertainty);
 }
 
 void STAEngine::displayTimingReport() {

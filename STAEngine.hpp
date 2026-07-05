@@ -14,11 +14,11 @@ public:
   std::vector<NodeID> topologicalSort();
   void computeMinArrivalTimes();
   void computeMaxArrivalTimes();
-  void computeMaxRequiredTimes(double clockPeriod);
+  void computeMaxRequiredTimes(double clockPeriod, double clockUncertainty);
   void computeSetupSlack();
-  void computeHoldSlack();
+  void computeHoldSlack(double clockUncertainty);
   void displaySetupCriticalPaths(size_t numberofPaths);
   void displayHoldCriticalPaths(size_t numberofPaths);
-  void run(double clockPeriod);
+  void run(double clockPeriod, double clockUncertainty = 0.0);
   void displayTimingReport();
 };
