@@ -36,9 +36,7 @@ std::vector<NodeID> STAEngine::topologicalSort() {
   std::vector<NodeID> result;
 
   for (NodeID i = 0; i < numberOfNodes; i++) {
-    for (const auto &neighbour : graph.getNode(i).fanout) {
-      inDegree[neighbour]++;
-    }
+    inDegree[i] = graph.getNode(i).incomingEdges.size();
   }
 
   for (NodeID i = 0; i < numberOfNodes; i++) {
@@ -51,7 +49,9 @@ std::vector<NodeID> STAEngine::topologicalSort() {
     NodeID currentNode = nodeQueue.front();
     nodeQueue.pop();
     result.push_back(currentNode);
-    for (const auto &neighbour : graph.getNode(currentNode).fanout) {
+    for (const EdgeID &outgoingEdgeID :
+         graph.getNode(currentNode).outgoingEdges) {
+      NodeID neighbour = graph.getEdge(outgoingEdgeID).destination;
       inDegree[neighbour]--;
       if (inDegree[neighbour] == 0) {
         nodeQueue.push(neighbour);
@@ -72,11 +72,14 @@ void STAEngine::computeMaxArrivalTimes() {
 
     double maxArrival = 0.0;
 
-    for (NodeID predecessorNodeID : currentNode.fanin) {
-      const Node &predecessorNode = graph.getNode(predecessorNodeID);
-      if (predecessorNode.timing.maxArrival >= maxArrival) {
-        maxArrival = predecessorNode.timing.maxArrival;
-        currentNode.setupCriticalPredecessor = predecessorNodeID;
+    for (EdgeID predecessorEdgeID : currentNode.incomingEdges) {
+      const Edge &edge = graph.getEdge(predecessorEdgeID);
+      const Node &predecessorNode = graph.getNode(edge.source);
+      double candidate = predecessorNode.timing.maxArrival + edge.maxDelay;
+
+      if (candidate >= maxArrival) {
+        maxArrival = candidate;
+        currentNode.setupCriticalPredecessor = edge.source;
       }
     }
 
@@ -100,17 +103,20 @@ void STAEngine::computeMinArrivalTimes() {
   for (NodeID currentNodeID : sortedNodes) {
     Node &currentNode = graph.getNode(currentNodeID);
 
-    if (currentNode.fanin.empty() && currentNode.type == NodeType::gate) {
+    if (currentNode.incomingEdges.empty() &&
+        currentNode.type == NodeType::gate) {
       throw std::runtime_error("Gate has no fanin");
     }
 
     double minArrival = std::numeric_limits<double>::infinity();
 
-    for (NodeID predecessorNodeID : currentNode.fanin) {
-      const Node &predecessorNode = graph.getNode(predecessorNodeID);
-      if (predecessorNode.timing.minArrival <= minArrival) {
-        minArrival = predecessorNode.timing.minArrival;
-        currentNode.holdCriticalPredecessor = predecessorNodeID;
+    for (EdgeID predecessorEdgeID : currentNode.incomingEdges) {
+      const Edge &edge = graph.getEdge(predecessorEdgeID);
+      const Node &predecessorNode = graph.getNode(edge.source);
+      double candidate = predecessorNode.timing.minArrival + edge.minDelay;
+      if (candidate <= minArrival) {
+        minArrival = candidate;
+        currentNode.holdCriticalPredecessor = edge.source;
       }
     }
 
@@ -148,11 +154,13 @@ void STAEngine::computeMaxRequiredTimes(double clockPeriod,
   for (auto currentNodeIterator = sortedNodes.rbegin();
        currentNodeIterator != sortedNodes.rend(); ++currentNodeIterator) {
     Node &currentNode = graph.getNode(*currentNodeIterator);
-    for (NodeID successorNodeID : currentNode.fanout) {
-      const Node &successorNode = graph.getNode(successorNodeID);
+    for (EdgeID successorEdgeID : currentNode.outgoingEdges) {
+      const Edge &successorEdge = graph.getEdge(successorEdgeID);
+      const Node &successorNode = graph.getNode(successorEdge.destination);
+      double candidate = successorNode.timing.required -
+                         successorNode.maxCellDelay - successorEdge.maxDelay;
       currentNode.timing.required =
-          std::min(currentNode.timing.required,
-                   successorNode.timing.required - successorNode.maxCellDelay);
+          std::min(currentNode.timing.required, candidate);
     }
   }
 }

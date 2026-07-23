@@ -388,35 +388,35 @@ void NetListParser::validate() const {
   }
   for (const Node &currentNode : graph.getNodes()) {
     if (currentNode.type == NodeType::primaryInput) {
-      if (currentNode.fanin.empty() == false) {
+      if (currentNode.incomingEdges.empty() == false) {
         throw std::runtime_error("PRIMARY INPUT " + currentNode.name +
                                  " SHOULD NOT HAVE FANIN");
       }
-      if (currentNode.fanout.empty() == true) {
+      if (currentNode.outgoingEdges.empty() == true) {
         throw std::runtime_error("PRIMARY INPUT " + currentNode.name +
                                  " HAS NO FANOUT");
       }
     } else if (currentNode.type == NodeType::primaryOutput) {
-      if (currentNode.fanin.empty() == true) {
+      if (currentNode.incomingEdges.empty() == true) {
         throw std::runtime_error("PRIMARY OUTPUT " + currentNode.name +
                                  " HAS NO FANIN");
       }
-      if (currentNode.fanout.empty() == false) {
+      if (currentNode.outgoingEdges.empty() == false) {
         throw std::runtime_error("PRIMARY OUTPUT " + currentNode.name +
                                  " SHOULD NOT HAVE FANOUT");
       }
     } else if (currentNode.type == NodeType::gate) {
-      if (currentNode.fanin.empty() == true) {
+      if (currentNode.incomingEdges.empty() == true) {
         throw std::runtime_error("GATE " + currentNode.name + " HAS NO FANIN");
       }
-      if (currentNode.fanout.empty() == true) {
+      if (currentNode.outgoingEdges.empty() == true) {
         throw std::runtime_error("GATE " + currentNode.name + " HAS NO FANOUT");
       }
       if (currentNode.hasDelay == false) {
         throw std::runtime_error("GATE " + currentNode.name + " HAS NO DELAY");
       }
     } else if (currentNode.type == NodeType::flipFlopQ) {
-      if (currentNode.fanin.empty() == false) {
+      if (currentNode.incomingEdges.empty() == false) {
         throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
                                  " CANNOT HAVE FANIN");
       }
@@ -424,16 +424,16 @@ void NetListParser::validate() const {
         throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
                                  " HAS NO CLOCK_TO_Q");
       }
-      if (currentNode.fanout.empty() == true) {
+      if (currentNode.outgoingEdges.empty() == true) {
         throw std::runtime_error("FLIP FLOP Q " + currentNode.name +
                                  " HAS NO FANOUT");
       }
     } else if (currentNode.type == NodeType::flipFlopD) {
-      if (currentNode.fanin.empty() == true) {
+      if (currentNode.incomingEdges.empty() == true) {
         throw std::runtime_error("FLIP FLOP D " + currentNode.name +
                                  " HAS NO FANIN");
       }
-      if (currentNode.fanout.empty() == false) {
+      if (currentNode.outgoingEdges.empty() == false) {
         throw std::runtime_error("FLIP FLOP D " + currentNode.name +
                                  " CANNOT HAVE FANOUT");
       }
