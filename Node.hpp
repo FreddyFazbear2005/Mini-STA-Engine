@@ -4,6 +4,7 @@
 #include <vector>
 
 using NodeID = int;
+using EdgeID = int;
 
 enum class NodeType { primaryInput, primaryOutput, gate, flipFlopD, flipFlopQ };
 
@@ -27,8 +28,11 @@ struct Node {
   NodeType type = NodeType::gate;
   std::string cellType;
 
-  std::vector<NodeID> fanin;
-  std::vector<NodeID> fanout;
+  // std::vector<NodeID> fanin;
+  // std::vector<NodeID> fanout;
+
+  std::vector<EdgeID> incomingEdges;
+  std::vector<EdgeID> outgoingEdges;
 
   NodeID setupCriticalPredecessor = -1;
   NodeID holdCriticalPredecessor = -1;
