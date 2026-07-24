@@ -98,9 +98,25 @@ void NetListParser::parseNode(std::stringstream &ss) {
 void NetListParser::parseEdge(std::stringstream &ss) {
   std::string sourceName;
   std::string destinationName;
+  double maxDelay = 0.0;
+  double minDelay = 0.0;
 
   if (!(ss >> sourceName >> destinationName)) {
     throw std::runtime_error("Malformed EDGE statement");
+  }
+
+  if (!(ss >> maxDelay)) {
+    maxDelay = 0.0;
+    minDelay = 0.0;
+  } else {
+    // maxDelay was provided, so minDelay must also be provided
+    if (!(ss >> minDelay)) {
+      throw std::runtime_error("EDGE requires both maxDelay and minDelay");
+    }
+  }
+
+  if (maxDelay < 0 || minDelay < 0) {
+    throw std::runtime_error("EDGE delays cannot be negative");
   }
 
   std::string extra;
@@ -120,7 +136,7 @@ void NetListParser::parseEdge(std::stringstream &ss) {
   NodeID sourceID = nodeMap.at(sourceName);
   NodeID destinationID = nodeMap.at(destinationName);
 
-  graph.addEdge(sourceID, destinationID);
+  graph.addEdge(sourceID, destinationID, maxDelay, minDelay);
 }
 
 void NetListParser::parseDelay(std::stringstream &ss) {

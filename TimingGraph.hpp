@@ -19,7 +19,8 @@ private:
 public:
   NodeID addNode(const std::string &name, NodeType type = NodeType::gate);
 
-  void addEdge(NodeID src, NodeID dst);
+  void addEdge(NodeID src, NodeID dst, double maxDelay = 0.0,
+               double minDelay = 0.0);
 
   Node &getNode(NodeID id);
 
