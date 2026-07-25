@@ -17,7 +17,9 @@ private:
   std::vector<Edge> edges;
 
 public:
-  NodeID addNode(const std::string &name, NodeType type = NodeType::gate);
+  NodeID addNode(const std::string &name, NodeType type = NodeType::gate,
+                 const std::string &cellType = "", double maxCellDelay = 0.0,
+                 double minCellDelay = 0.0);
 
   void addEdge(NodeID src, NodeID dst, double maxDelay = 0.0,
                double minDelay = 0.0);

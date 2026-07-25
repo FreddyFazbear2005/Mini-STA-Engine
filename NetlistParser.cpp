@@ -1,4 +1,5 @@
 #include "NetlistParser.hpp"
+#include "Cell.hpp"
 #include "Node.hpp"
 #include "TimingGraph.hpp"
 #include <fstream>
@@ -8,7 +9,8 @@
 
 NetListParser::NetListParser(TimingGraph &graph) : graph(graph) {};
 
-void NetListParser::parse(const std::string &filename) {
+void NetListParser::parse(const std::string &filename,
+                          const CellLibrary &cellLibrary) {
   std::ifstream file(filename);
 
   if (file.is_open() == false) {
@@ -32,11 +34,9 @@ void NetListParser::parse(const std::string &filename) {
     }
 
     if (keyword == "NODE") {
-      parseNode(ss);
+      parseNode(ss, cellLibrary);
     } else if (keyword == "EDGE") {
       parseEdge(ss);
-    } else if (keyword == "DELAY") {
-      parseDelay(ss);
     } else if (keyword == "CLOCK_TO_Q") {
       parseClockToQ(ss);
     } else if (keyword == "SETUP") {
@@ -59,17 +59,31 @@ void NetListParser::parse(const std::string &filename) {
   validate();
 }
 
-void NetListParser::parseNode(std::stringstream &ss) {
+void NetListParser::parseNode(std::stringstream &ss,
+                              const CellLibrary &cellLibrary) {
   std::string nodeName;
   std::string nodeType;
+  std::string cellType;
 
   if (!(ss >> nodeName >> nodeType)) {
     throw std::runtime_error("Malformed NODE statement");
   }
 
+  if (nodeMap.find(nodeName) != nodeMap.end()) {
+    throw std::runtime_error("Duplicate Node name: " + nodeName);
+  }
+
   NodeType type;
+  double maxDelay = 0.0;
+  double minDelay = 0.0;
   if (nodeType == "GATE") {
     type = NodeType::gate;
+    if (!(ss >> cellType)) {
+      throw std::runtime_error("Missing cell type for " + nodeName);
+    }
+    const Cell &cell = cellLibrary.getCell(cellType);
+    maxDelay = cell.maxDelay;
+    minDelay = cell.minDelay;
   } else if (nodeType == "FF_Q") {
     type = NodeType::flipFlopQ;
   } else if (nodeType == "FF_D") {
@@ -87,11 +101,7 @@ void NetListParser::parseNode(std::stringstream &ss) {
     throw std::runtime_error("Unexpected token in NODE statement: " + extra);
   }
 
-  if (nodeMap.find(nodeName) != nodeMap.end()) {
-    throw std::runtime_error("Duplicate Node name: " + nodeName);
-  }
-
-  NodeID id = graph.addNode(nodeName, type);
+  NodeID id = graph.addNode(nodeName, type, cellType, maxDelay, minDelay);
   nodeMap[nodeName] = id;
 }
 
@@ -137,48 +147,6 @@ void NetListParser::parseEdge(std::stringstream &ss) {
   NodeID destinationID = nodeMap.at(destinationName);
 
   graph.addEdge(sourceID, destinationID, maxDelay, minDelay);
-}
-
-void NetListParser::parseDelay(std::stringstream &ss) {
-  std::string nodeName;
-  double maxCellDelay;
-  double minCellDelay;
-
-  if (!(ss >> nodeName >> maxCellDelay >> minCellDelay)) {
-    throw std::runtime_error("Malformed DELAY statement");
-  }
-
-  std::string extra;
-  if (ss >> extra) {
-    throw std::runtime_error("Unexpected token in DELAY statement: " + extra);
-  }
-
-  if (nodeMap.find(nodeName) == nodeMap.end()) {
-    throw std::runtime_error("DELAY references undefined node: " + nodeName);
-  }
-
-  if (maxCellDelay < minCellDelay) {
-    throw std::runtime_error("Max cell delay is lesser than min cell delay");
-  }
-
-  if (maxCellDelay < 0 || minCellDelay < 0) {
-    throw std::runtime_error("Cell delays cannot be NEGATIVE");
-  }
-
-  NodeID nodeID = nodeMap.at(nodeName);
-  Node &node = graph.getNode(nodeID);
-
-  if (node.type != NodeType::gate) {
-    throw std::runtime_error("DELAY can only be applied to GATE nodes");
-  }
-
-  if (node.hasDelay == true) {
-    throw std::runtime_error("DUPLICATE DELAY FOR NODE " + node.name);
-  }
-
-  node.maxCellDelay = maxCellDelay;
-  node.minCellDelay = minCellDelay;
-  node.hasDelay = true;
 }
 
 void NetListParser::parseClockToQ(std::stringstream &ss) {
@@ -427,9 +395,6 @@ void NetListParser::validate() const {
       }
       if (currentNode.outgoingEdges.empty() == true) {
         throw std::runtime_error("GATE " + currentNode.name + " HAS NO FANOUT");
-      }
-      if (currentNode.hasDelay == false) {
-        throw std::runtime_error("GATE " + currentNode.name + " HAS NO DELAY");
       }
     } else if (currentNode.type == NodeType::flipFlopQ) {
       if (currentNode.incomingEdges.empty() == false) {

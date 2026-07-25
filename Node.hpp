@@ -43,7 +43,6 @@ struct Node {
   double holdTime = 0.0;
   double clockToQ = 0.0;
 
-  bool hasDelay = false;
   bool hasSetupTime = false;
   bool hasHoldTime = false;
   bool hasClockToQ = false;
@@ -51,6 +50,8 @@ struct Node {
   bool hasOutputDelay = false;
 
   Node(NodeID nodeID, const std::string &nodeName,
-       NodeType nodeType = NodeType::gate)
-      : id(nodeID), name(nodeName), type(nodeType) {}
+       NodeType nodeType = NodeType::gate, const std::string &cellType = "",
+       double maxCellDelay = 0.0, double minCellDelay = 0.0)
+      : id(nodeID), name(nodeName), maxCellDelay(maxCellDelay),
+        minCellDelay(minCellDelay), type(nodeType), cellType(cellType) {}
 };

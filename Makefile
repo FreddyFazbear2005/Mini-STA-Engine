@@ -7,7 +7,8 @@ SRCS = main.cpp \
 			 TimingGraph.cpp \
 			 STAEngine.cpp \
 			 NetlistParser.cpp \
-			 Cell.cpp
+			 Cell.cpp \
+			 LibraryParser.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
