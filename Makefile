@@ -6,7 +6,8 @@ TARGET = sta
 SRCS = main.cpp \
 			 TimingGraph.cpp \
 			 STAEngine.cpp \
-			 NetlistParser.cpp
+			 NetlistParser.cpp \
+			 Cell.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
