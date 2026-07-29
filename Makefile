@@ -8,7 +8,8 @@ SRCS = main.cpp \
 			 STAEngine.cpp \
 			 NetlistParser.cpp \
 			 Cell.cpp \
-			 LibraryParser.cpp
+			 LibraryParser.cpp \
+			 DotExporter.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

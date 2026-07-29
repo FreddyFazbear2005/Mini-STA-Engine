@@ -1,4 +1,5 @@
 #include "Cell.hpp"
+#include "DotExporter.hpp"
 #include "LibraryParser.hpp"
 #include "NetlistParser.hpp"
 #include "STAEngine.hpp"
@@ -20,4 +21,5 @@ int main() {
   sta.displayTimingReport();
   sta.displaySetupCriticalPaths(5);
   sta.displayHoldCriticalPaths(5);
+  DotExporter::exportGraph(graph, "timing_graph.dot");
 }

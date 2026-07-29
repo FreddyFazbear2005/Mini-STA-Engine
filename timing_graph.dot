@@ -1,0 +1,46 @@
+digraph TimingGraph {
+    rankdir=LR;
+
+    A;
+    B;
+    C;
+    D;
+    G1;
+    G2;
+    G3;
+    G4;
+    G5;
+    G6;
+    G7;
+    G8;
+    G9;
+    G10;
+    G11;
+    G12;
+    OUT1;
+    OUT2;
+
+    A -> G1;
+    B -> G1;
+    B -> G2;
+    C -> G2;
+    G1 -> G3;
+    G1 -> G4;
+    G2 -> G4;
+    G2 -> G5;
+    G3 -> G6;
+    G5 -> G6;
+    G4 -> G7;
+    G6 -> G7;
+    G6 -> G8;
+    D -> G8;
+    G7 -> G9;
+    G8 -> G10;
+    G9 -> G10;
+    G10 -> G11;
+    C -> G11;
+    G11 -> G12;
+    A -> G12;
+    G12 -> OUT1;
+    G10 -> OUT2;
+}
