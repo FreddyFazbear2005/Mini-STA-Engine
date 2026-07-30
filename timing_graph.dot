@@ -1,24 +1,76 @@
 digraph TimingGraph {
     rankdir=LR;
 
-    A;
-    B;
-    C;
-    D;
-    G1;
-    G2;
-    G3;
-    G4;
-    G5;
-    G6;
-    G7;
-    G8;
-    G9;
-    G10;
-    G11;
-    G12;
-    OUT1;
-    OUT2;
+    node [
+         shape=box,
+         style=filled,
+         fillcolor=lightgray
+    ];
+
+    edge [
+         arrowsize=0.8
+    ];
+
+    A [
+        shape=ellipse,
+        label="A"
+    ];
+    B [
+        shape=ellipse,
+        label="B"
+    ];
+    C [
+        shape=ellipse,
+        label="C"
+    ];
+    D [
+        shape=ellipse,
+        label="D"
+    ];
+    G1 [
+        label="G1\nNAND2_X1"
+    ];
+    G2 [
+        label="G2\nNOR2_X1"
+    ];
+    G3 [
+        label="G3\nINV_X1"
+    ];
+    G4 [
+        label="G4\nXOR2_X1"
+    ];
+    G5 [
+        label="G5\nBUF_X1"
+    ];
+    G6 [
+        label="G6\nAND2_X1"
+    ];
+    G7 [
+        label="G7\nOR2_X1"
+    ];
+    G8 [
+        label="G8\nNAND2_X1"
+    ];
+    G9 [
+        label="G9\nINV_X1"
+    ];
+    G10 [
+        label="G10\nXOR2_X1"
+    ];
+    G11 [
+        label="G11\nAND2_X1"
+    ];
+    G12 [
+        label="G12\nOR2_X1"
+    ];
+    OUT1 [
+        shape=ellipse,
+        label="OUT1"
+    ];
+    OUT2 [
+        shape=ellipse,
+        label="OUT2"
+    ];
 
     A -> G1;
     B -> G1;

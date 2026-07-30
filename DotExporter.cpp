@@ -1,5 +1,6 @@
 #include "DotExporter.hpp"
 #include "Node.hpp"
+#include <algorithm>
 #include <fstream>
 #include <stdexcept>
 
@@ -8,6 +9,10 @@ void DotExporter::exportGraph(const TimingGraph &graph,
   std::ofstream file(filename);
   if (!file) {
     throw std::runtime_error("Cannot open " + filename);
+  }
+
+  if (graph.size() == 0) {
+    throw std::runtime_error("The graph is empty, no image can be generated");
   }
 
   DotExporter::writeHeader(file);
@@ -60,3 +65,84 @@ void DotExporter::writeEdges(std::ostream &out, const TimingGraph &graph) {
 }
 
 void DotExporter::writeFooter(std::ostream &out) { out << "}\n"; }
+
+std::vector<CriticalPath> getWorstSetupPaths(const TimingGraph &graph,
+                                             size_t count) {
+  std::vector<TimingPath> setupCriticalPaths;
+  setupCriticalPaths.reserve(graph.size());
+
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
+       currentNodeID++) {
+    const Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.type == NodeType::flipFlopD ||
+        currentNode.type == NodeType::primaryOutput) {
+      setupCriticalPaths.push_back(
+          TimingPath{currentNodeID, currentNode.timing.setupSlack, 0});
+    }
+  }
+  if (setupCriticalPaths.empty() == true) {
+    throw std::runtime_error("No setup paths found");
+  }
+  std::stable_sort(setupCriticalPaths.begin(), setupCriticalPaths.end(),
+                   [](const TimingPath &a, const TimingPath &b) {
+                     return a.setupSlack < b.setupSlack;
+                   });
+  size_t numberOfPathsToDisplay = std::min(count, setupCriticalPaths.size());
+  std::vector<CriticalPath> pathsToDisplay(numberOfPathsToDisplay);
+  for (size_t pathIndex = 0; pathIndex < numberOfPathsToDisplay; ++pathIndex) {
+    CriticalPath &path = pathsToDisplay[pathIndex];
+    path.nodes.reserve(graph.size());
+    NodeID currentNodeID = setupCriticalPaths[pathIndex].endNodeID;
+    while (currentNodeID != -1) {
+      path.nodes.push_back(currentNodeID);
+      currentNodeID = graph.getNode(currentNodeID).setupCriticalPredecessor;
+    }
+    std::reverse(path.nodes.begin(), path.nodes.end());
+    path.slack = setupCriticalPaths[pathIndex].setupSlack;
+    path.startNodeID = path.nodes.front();
+    path.endNodeID = path.nodes.back();
+    path.delay = graph.getNode(path.endNodeID).timing.maxArrival;
+  }
+  return pathsToDisplay;
+}
+
+std::vector<CriticalPath> getWorstHoldPaths(const TimingGraph &graph,
+                                            size_t count) {
+  std::vector<TimingPath> holdCriticalPaths;
+  holdCriticalPaths.reserve(graph.size());
+
+  const NodeID numberOfNodes = static_cast<NodeID>(graph.size());
+  for (NodeID currentNodeID = 0; currentNodeID < numberOfNodes;
+       currentNodeID++) {
+    const Node &currentNode = graph.getNode(currentNodeID);
+    if (currentNode.type == NodeType::flipFlopD) {
+      holdCriticalPaths.push_back(
+          TimingPath{currentNodeID, 0, currentNode.timing.holdSlack});
+    }
+  }
+  if (holdCriticalPaths.empty() == true) {
+    throw std::runtime_error("No hold paths found");
+  }
+  std::stable_sort(holdCriticalPaths.begin(), holdCriticalPaths.end(),
+                   [](const TimingPath &a, const TimingPath &b) {
+                     return a.holdSlack < b.holdSlack;
+                   });
+  size_t numberOfPathsToDisplay = std::min(count, holdCriticalPaths.size());
+  std::vector<CriticalPath> pathsToDisplay(numberOfPathsToDisplay);
+  for (size_t pathIndex = 0; pathIndex < numberOfPathsToDisplay; ++pathIndex) {
+    CriticalPath &path = pathsToDisplay[pathIndex];
+    path.nodes.reserve(graph.size());
+    NodeID currentNodeID = holdCriticalPaths[pathIndex].endNodeID;
+    while (currentNodeID != -1) {
+      path.nodes.push_back(currentNodeID);
+      currentNodeID = graph.getNode(currentNodeID).holdCriticalPredecessor;
+    }
+    std::reverse(path.nodes.begin(), path.nodes.end());
+    path.slack = holdCriticalPaths[pathIndex].holdSlack;
+    path.startNodeID = path.nodes.front();
+    path.endNodeID = path.nodes.back();
+    path.delay = graph.getNode(path.endNodeID).timing.minArrival;
+  }
+  return pathsToDisplay;
+}
