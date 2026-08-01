@@ -19,7 +19,12 @@ int main() {
   sta.run(parser.getClockPeriod(), parser.getClockUncertainty());
 
   sta.displayTimingReport();
-  sta.displaySetupCriticalPaths(5);
-  sta.displayHoldCriticalPaths(5);
-  DotExporter::exportGraph(graph, "timing_graph.dot");
+  int numberOfPaths = 100;
+  sta.displaySetupCriticalPaths(numberOfPaths);
+  sta.displayHoldCriticalPaths(numberOfPaths);
+  std::vector<CriticalPath> setupPaths =
+      getWorstSetupPaths(graph, numberOfPaths);
+  std::vector<CriticalPath> holdPaths = getWorstHoldPaths(graph, numberOfPaths);
+
+  DotExporter::exportGraph(graph, "timing_graph.dot", setupPaths, holdPaths);
 }

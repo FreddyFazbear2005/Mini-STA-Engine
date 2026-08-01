@@ -4,95 +4,224 @@ digraph TimingGraph {
     node [
          shape=box,
          style=filled,
-         fillcolor=lightgray
+         fillcolor=lightgray,
+         fontname="Helvetica"
     ];
 
     edge [
-         arrowsize=0.8
+         arrowsize=0.8,
+         fontname="Helvetica"
     ];
 
-    A [
+    "A" [
         shape=ellipse,
-        label="A"
+        label="A\nMax Arrival : 0.20 ns\nMin Arrival : 0.20 ns\nSetup Slack : 5.87 ns\nHold Slack  : 0.00 ns"
     ];
-    B [
+    "B" [
         shape=ellipse,
-        label="B"
+        label="B\nMax Arrival : 0.25 ns\nMin Arrival : 0.25 ns\nSetup Slack : 6.12 ns\nHold Slack  : 0.00 ns"
     ];
-    C [
+    "C" [
         shape=ellipse,
-        label="C"
+        label="C\nMax Arrival : 0.15 ns\nMin Arrival : 0.15 ns\nSetup Slack : 6.24 ns\nHold Slack  : 0.00 ns"
     ];
-    D [
+    "D" [
         shape=ellipse,
-        label="D"
+        label="D\nMax Arrival : 0.30 ns\nMin Arrival : 0.30 ns\nSetup Slack : 7.68 ns\nHold Slack  : 0.00 ns"
     ];
-    G1 [
-        label="G1\nNAND2_X1"
+    "FF1_Q" [
+        shape=doublecircle,
+        label="FF1_Q\nMax Arrival : 0.22 ns\nMin Arrival : 0.22 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G2 [
-        label="G2\nNOR2_X1"
+    "FF2_Q" [
+        shape=doublecircle,
+        label="FF2_Q\nMax Arrival : 0.18 ns\nMin Arrival : 0.18 ns\nSetup Slack : 6.19 ns\nHold Slack  : 0.00 ns"
     ];
-    G3 [
-        label="G3\nINV_X1"
+    "G1" [
+        label="G1\nNAND2\nMax Arrival : 0.54 ns\nMin Arrival : 0.38 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G4 [
-        label="G4\nXOR2_X1"
+    "G2" [
+        label="G2\nNOR2\nMax Arrival : 0.60 ns\nMin Arrival : 0.38 ns\nSetup Slack : 6.12 ns\nHold Slack  : 0.00 ns"
     ];
-    G5 [
-        label="G5\nBUF_X1"
+    "G3" [
+        label="G3\nXOR2\nMax Arrival : 1.02 ns\nMin Arrival : 0.45 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G6 [
-        label="G6\nAND2_X1"
+    "G4" [
+        label="G4\nINV\nMax Arrival : 0.75 ns\nMin Arrival : 0.46 ns\nSetup Slack : 6.12 ns\nHold Slack  : 0.00 ns"
     ];
-    G7 [
-        label="G7\nOR2_X1"
+    "G5" [
+        label="G5\nMUX2\nMax Arrival : 1.44 ns\nMin Arrival : 0.72 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G8 [
-        label="G8\nNAND2_X1"
+    "G6" [
+        label="G6\nBUF\nMax Arrival : 1.62 ns\nMin Arrival : 0.82 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G9 [
-        label="G9\nINV_X1"
+    "G7" [
+        label="G7\nNAND2\nMax Arrival : 1.94 ns\nMin Arrival : 0.48 ns\nSetup Slack : 6.36 ns\nHold Slack  : 0.00 ns"
     ];
-    G10 [
-        label="G10\nXOR2_X1"
+    "G8" [
+        label="G8\nXOR2\nMax Arrival : 2.10 ns\nMin Arrival : 1.12 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G11 [
-        label="G11\nAND2_X1"
+    "G9" [
+        label="G9\nNOR2\nMax Arrival : 2.45 ns\nMin Arrival : 1.32 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    G12 [
-        label="G12\nOR2_X1"
+    "G10" [
+        label="G10\nMUX2\nMax Arrival : 2.87 ns\nMin Arrival : 0.75 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
     ];
-    OUT1 [
+    "G11" [
+        label="G11\nINV\nMax Arrival : 3.02 ns\nMin Arrival : 0.83 ns\nSetup Slack : 6.01 ns\nHold Slack  : 0.00 ns"
+    ];
+    "G12" [
+        label="G12\nNAND2\nMax Arrival : 3.34 ns\nMin Arrival : 1.01 ns\nSetup Slack : 6.01 ns\nHold Slack  : 0.00 ns"
+    ];
+    "G13" [
+        label="G13\nBUF\nMax Arrival : 3.05 ns\nMin Arrival : 0.85 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
+    ];
+    "G14" [
+        label="G14\nXOR2\nMax Arrival : 3.53 ns\nMin Arrival : 1.15 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.00 ns"
+    ];
+    "G15" [
+        label="G15\nNOR2\nMax Arrival : 2.80 ns\nMin Arrival : 1.52 ns\nSetup Slack : 6.28 ns\nHold Slack  : 0.00 ns"
+    ];
+    "G16" [
+        label="G16\nNAND2\nMax Arrival : 3.12 ns\nMin Arrival : 1.70 ns\nSetup Slack : 6.28 ns\nHold Slack  : 0.00 ns"
+    ];
+    "FF3_D" [
+        shape=octagon,
+        label="FF3_D\nMax Arrival : 3.34 ns\nMin Arrival : 1.01 ns\nSetup Slack : 6.01 ns\nHold Slack  : 0.59 ns"
+    ];
+    "FF4_D" [
+        shape=octagon,
+        label="FF4_D\nMax Arrival : 3.53 ns\nMin Arrival : 1.15 ns\nSetup Slack : 5.85 ns\nHold Slack  : 0.75 ns"
+    ];
+    "FF5_D" [
+        shape=octagon,
+        label="FF5_D\nMax Arrival : 3.12 ns\nMin Arrival : 1.70 ns\nSetup Slack : 6.28 ns\nHold Slack  : 1.31 ns"
+    ];
+    "OUT1" [
         shape=ellipse,
-        label="OUT1"
+        label="OUT1\nMax Arrival : 3.34 ns\nMin Arrival : 1.01 ns\nSetup Slack : 6.41 ns\nHold Slack  : 0.00 ns"
     ];
-    OUT2 [
+    "OUT2" [
         shape=ellipse,
-        label="OUT2"
+        label="OUT2\nMax Arrival : 3.12 ns\nMin Arrival : 1.70 ns\nSetup Slack : 6.68 ns\nHold Slack  : 0.00 ns"
     ];
 
-    A -> G1;
-    B -> G1;
-    B -> G2;
-    C -> G2;
-    G1 -> G3;
-    G1 -> G4;
-    G2 -> G4;
-    G2 -> G5;
-    G3 -> G6;
-    G5 -> G6;
-    G4 -> G7;
-    G6 -> G7;
-    G6 -> G8;
-    D -> G8;
-    G7 -> G9;
-    G8 -> G10;
-    G9 -> G10;
-    G10 -> G11;
-    C -> G11;
-    G11 -> G12;
-    A -> G12;
-    G12 -> OUT1;
-    G10 -> OUT2;
+    "FF1_Q" -> "G1" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "A" -> "G1";
+    "FF2_Q" -> "G2";
+    "B" -> "G2";
+    "G1" -> "G3" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "C" -> "G3" [
+        color="0.666667,0.750000,0.450000",
+         penwidth=1.50
+    ];
+    "G2" -> "G4";
+    "G3" -> "G5" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G4" -> "G5";
+    "G5" -> "G6" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G6" -> "G7";
+    "D" -> "G7" [
+        color="0.666667,0.750000,1.000000",
+         penwidth=5.00
+    ];
+    "G6" -> "G8" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G8" -> "G9" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G7" -> "G10" [
+        color="0.666667,0.750000,1.000000",
+         penwidth=5.00
+    ];
+    "G9" -> "G10" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G10" -> "G11" [
+        color="0.000000,1.000000,0.825000",
+         penwidth=4.12
+    ];
+    "G11" -> "G12" [
+        color="0.000000,1.000000,0.825000",
+         penwidth=4.12
+    ];
+    "G12" -> "FF3_D" [
+        color="0.000000,1.000000,0.825000",
+         penwidth=4.12
+    ];
+    "G12" -> "OUT1" [
+        color="0.000000,1.000000,0.475000",
+         penwidth=2.38
+    ];
+    "G10" -> "G13" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G13" -> "G14" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G14" -> "FF4_D" [
+        color="0.000000,1.000000,1.000000",
+         penwidth=5.00
+    ];
+    "G9" -> "G15" [
+        color="0.000000,1.000000,0.650000",
+         penwidth=3.25
+    ];
+    "G15" -> "G16" [
+        color="0.000000,1.000000,0.650000",
+         penwidth=3.25
+    ];
+    "G16" -> "FF5_D" [
+        color="0.000000,1.000000,0.650000",
+         penwidth=3.25
+    ];
+    "G16" -> "OUT2" [
+        color="0.000000,1.000000,0.300000",
+         penwidth=1.50
+    ];
+subgraph cluster_legend {
+    label="Legend";
+    fontsize=12;
+    fillcolor="#F8F8F8";
+    style="rounded,filled";
+    margin=12;
+    fontname="Helvetica";
+    node   [style=filled,fillcolor=lightgray];
+    PI_PO  [shape=ellipse,      label="Primary I/O"];
+    G      [shape=box,      label="Logic Gate"];
+    FFQ    [shape=doublecircle,      label="Launch FF"];
+    FFD    [shape=octagon,      label="Capture FF"];
+    Setup1 [shape=none, width=0, height=0, label=""];
+    Setup2 [shape=none, width=0, height=0, label=""];
+    Setup1 -> Setup2 [color=red, penwidth=4];
+    Hold1 [shape=none, width=0, height=0, label=""];
+    Hold2 [shape=none, width=0, height=0, label=""];
+    Hold1 -> Hold2 [color=blue, penwidth=4];
+    SetupLabel [shape=plaintext, label="Setup Critical Path"];
+    HoldLabel  [shape=plaintext, label="Hold Critical Path"];
+
+    Setup2 -> SetupLabel [style=invis];
+    Hold2 -> HoldLabel [style=invis];
+    PI_PO -> G -> FFQ -> FFD [style=invis];
+    { rank=same; PI_PO; G; FFQ; FFD; }
+    { rank=same; Setup1; Setup2; SetupLabel; }
+    { rank=same; Hold1; Hold2; HoldLabel; }
+}
 }

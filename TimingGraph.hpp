@@ -38,3 +38,23 @@ public:
 
   size_t size() const;
 };
+
+struct EdgeStyle {
+  std::string color = "black";
+  double penWidth = 1.0;
+};
+
+struct EdgeKey {
+  NodeID source;
+  NodeID destination;
+  bool operator==(const EdgeKey &other) const {
+    return source == other.source && destination == other.destination;
+  }
+};
+
+struct EdgeKeyHash {
+  size_t operator()(const EdgeKey &key) const {
+    return std::hash<NodeID>{}(key.source) ^
+           (std::hash<NodeID>{}(key.destination) << 1);
+  }
+};
