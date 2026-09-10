@@ -19,7 +19,7 @@ int main() {
   sta.run(parser.getClockPeriod(), parser.getClockUncertainty());
 
   sta.displayTimingReport();
-  int numberOfPaths = 100;
+  int numberOfPaths = 5;
   sta.displaySetupCriticalPaths(numberOfPaths);
   sta.displayHoldCriticalPaths(numberOfPaths);
   std::vector<CriticalPath> setupPaths =
